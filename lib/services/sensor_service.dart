@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
@@ -115,7 +116,9 @@ class SensorService {
         final doc = await _fs!.collection('config').doc('thresholds').get();
         if (doc.exists) return doc.data()!;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('SensorService.getThresholdConfig failed, using defaults: $e');
+    }
     return {
       'temperature': {'min': 25.0, 'max': 40.0, 'unit': '°C'},
       'pressure': {'min': 0.8, 'max': 1.5, 'unit': 'bar'},

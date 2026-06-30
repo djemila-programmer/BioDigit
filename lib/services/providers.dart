@@ -27,10 +27,17 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider(this._authService) {
     _authSub = _authService.authStateChanges.listen((user) async {
-      if (user != null) {
-        _user = await _authService.getCurrentUserProfile();
-      } else {
+      try {
+        if (user != null) {
+          _user = await _authService.getCurrentUserProfile();
+        } else {
+          _user = null;
+        }
+        _error = null;
+      } catch (e) {
         _user = null;
+        _error = e.toString();
+        debugPrint('AuthProvider.authStateChanges failed: $e');
       }
       notifyListeners();
     });
@@ -141,6 +148,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return url;
     } catch (e) {
+      _error = e.toString();
       _isLoading = false;
       notifyListeners();
       return null;
@@ -222,13 +230,17 @@ class SensorProvider extends ChangeNotifier {
         notifyListeners();
 
         // Cache for offline
-        await _cacheService.cacheSensorReading(reading);
+        try {
+          await _cacheService.cacheSensorReading(reading);
 
-        // Log to history
-        await _historyService.logReading(reading);
+          // Log to history
+          await _historyService.logReading(reading);
 
-        // Check for critical values and notify
-        await _notificationService.checkAndNotify(reading);
+          // Check for critical values and notify
+          await _notificationService.checkAndNotify(reading);
+        } catch (e) {
+          debugPrint('SensorProvider.startListening post-processing failed: $e');
+        }
       },
       onError: (e) {
         _error = e.toString();
@@ -463,8 +475,13 @@ class FarmProvider extends ChangeNotifier {
   Future<void> loadSystemStats() async {
     try {
       _systemStats = await _farmService.getSystemStats();
+      _error = null;
       notifyListeners();
-    } catch (_) {}
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('FarmProvider.loadSystemStats failed: $e');
+      notifyListeners();
+    }
   }
 
   Future<String> createFarm({
@@ -574,7 +591,9 @@ class ThemeProvider extends ChangeNotifier {
         final saved = box.get('darkMode', defaultValue: false);
         _themeMode = saved == true ? ThemeMode.dark : ThemeMode.light;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('ThemeProvider._loadFromCache failed: $e');
+    }
   }
 
   dynamic get _themeBox {
@@ -588,6 +607,8 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _themeBox?.put('darkMode', dark);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('ThemeProvider.toggleTheme failed: $e');
+    }
   }
 }

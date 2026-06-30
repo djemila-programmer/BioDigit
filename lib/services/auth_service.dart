@@ -127,13 +127,9 @@ class AuthService {
   }
 
   Future<UserModel?> _fetchUserProfile(String uid) async {
-    try {
-      final doc = await _firestoreInstance?.collection('users').doc(uid).get();
-      if (doc != null && doc.exists) return UserModel.fromJson(doc.data()!);
-      return null;
-    } catch (e) {
-      return null;
-    }
+    final doc = await _firestoreInstance?.collection('users').doc(uid).get();
+    if (doc != null && doc.exists) return UserModel.fromJson(doc.data()!);
+    return null;
   }
 
   Future<UserModel?> getCurrentUserProfile() async {
