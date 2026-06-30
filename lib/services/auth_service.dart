@@ -145,11 +145,22 @@ class AuthService {
     return await _fetchUserProfile(user.uid);
   }
 
+  /// Fields that a user is never allowed to change on their own profile.
+  /// Stripping them here prevents privilege escalation even if a caller
+  /// passes them in (e.g. setting `role` to 'admin').
+  static const _protectedProfileFields = {'role', 'id', 'email', 'createdAt'};
+
   Future<void> updateUserProfile(Map<String, dynamic> updates) async {
     if (_authInstance == null) return;
     final user = _authInstance!.currentUser;
     if (user == null) throw AuthException('Non connecté.');
-    await _firestoreInstance?.collection('users').doc(user.uid).update(updates);
+    final sanitized = Map<String, dynamic>.from(updates)
+      ..removeWhere((key, _) => _protectedProfileFields.contains(key));
+    if (sanitized.isEmpty) return;
+    await _firestoreInstance
+        ?.collection('users')
+        .doc(user.uid)
+        .update(sanitized);
   }
 
   /// Change password for the current user.
