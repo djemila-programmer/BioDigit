@@ -31,12 +31,14 @@ class CacheService {
 
   /// Cache the latest sensor reading.
   Future<void> cacheSensorReading(SensorReading reading) async {
+    if (!_initialized) return;
     await _sensors.put('latest', reading.toJson());
     await _sensors.put('lastCachedAt', DateTime.now().toIso8601String());
   }
 
   /// Get the last cached sensor reading.
   SensorReading? getLastCachedReading() {
+    if (!_initialized) return null;
     final data = _sensors.get('latest');
     if (data == null) return null;
     final map = Map<String, dynamic>.from(data as Map);
@@ -53,6 +55,7 @@ class CacheService {
 
   /// Get when the sensor cache was last updated.
   DateTime? getLastCacheTime() {
+    if (!_initialized) return null;
     final ts = _sensors.get('lastCachedAt');
     if (ts == null) return null;
     return DateTime.tryParse(ts);
@@ -62,11 +65,13 @@ class CacheService {
 
   /// Cache alerts for offline viewing.
   Future<void> cacheAlerts(List<Map<String, dynamic>> alerts) async {
+    if (!_initialized) return;
     await _alerts.put('all', alerts);
   }
 
   /// Get cached alerts.
   List<Map<String, dynamic>> getCachedAlerts() {
+    if (!_initialized) return [];
     final data = _alerts.get('all');
     if (data == null) return [];
     return List<Map<String, dynamic>>.from(data);
@@ -76,11 +81,13 @@ class CacheService {
 
   /// Cache farm data for offline viewing.
   Future<void> cacheFarmData(String farmId, Map<String, dynamic> farm) async {
+    if (!_initialized) return;
     await _farms.put(farmId, farm);
   }
 
   /// Get cached farm data.
   Map<String, dynamic>? getCachedFarm(String farmId) {
+    if (!_initialized) return null;
     final data = _farms.get(farmId);
     if (data == null) return null;
     return Map<String, dynamic>.from(data);
@@ -88,6 +95,7 @@ class CacheService {
 
   /// Get all cached farms.
   List<Map<String, dynamic>> getAllCachedFarms() {
+    if (!_initialized) return [];
     return _farms.values.map((v) => Map<String, dynamic>.from(v as Map)).toList();
   }
 
@@ -95,6 +103,7 @@ class CacheService {
 
   /// Mark pending sync items (for when internet returns).
   Future<void> addPendingSync(String type, Map<String, dynamic> data) async {
+    if (!_initialized) return;
     final pending = _meta.get('pendingSync', defaultValue: <Map>[]);
     final list = List<Map>.from(pending);
     list.add({'type': type, 'data': data, 'timestamp': DateTime.now().toIso8601String()});
@@ -103,6 +112,7 @@ class CacheService {
 
   /// Get all pending sync items.
   List<Map<String, dynamic>> getPendingSyncs() {
+    if (!_initialized) return [];
     final data = _meta.get('pendingSync', defaultValue: <Map>[]);
     return List<Map<String, dynamic>>.from(
       (data as List).map((e) => Map<String, dynamic>.from(e as Map)),
@@ -111,11 +121,13 @@ class CacheService {
 
   /// Clear pending syncs after successful upload.
   Future<void> clearPendingSyncs() async {
+    if (!_initialized) return;
     await _meta.put('pendingSync', <Map>[]);
   }
 
   /// Check if data is stale (older than given minutes).
   bool isStale({int maxAgeMinutes = 5}) {
+    if (!_initialized) return true;
     final lastCached = getLastCacheTime();
     if (lastCached == null) return true;
     return DateTime.now().difference(lastCached).inMinutes > maxAgeMinutes;
@@ -123,6 +135,7 @@ class CacheService {
 
   /// Clear all caches.
   Future<void> clearAll() async {
+    if (!_initialized) return;
     await _sensors.clear();
     await _alerts.clear();
     await _farms.clear();

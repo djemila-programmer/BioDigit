@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../main.dart';
@@ -16,7 +17,8 @@ class AnomalyService {
     if (!firebaseReady) return 'demo-user';
     try {
       return FirebaseAuth.instance.currentUser?.uid ?? 'demo-user';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('AnomalyService._uid failed, using demo-user: $e');
       return 'demo-user';
     }
   }
@@ -33,7 +35,9 @@ class AnomalyService {
         'sensorAnomalies': report.sensorAnomalies,
         'timestamp': FieldValue.serverTimestamp(),
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('AnomalyService.saveReport failed: $e');
+    }
   }
 
   /// Get anomaly history from Firestore.
@@ -52,7 +56,8 @@ class AnomalyService {
         data['timestampDate'] = ts is Timestamp ? ts.toDate() : DateTime.now();
         return data;
       }).toList();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('AnomalyService.getHistory failed, using demo history: $e');
       return _demoHistory();
     }
   }
