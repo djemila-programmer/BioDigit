@@ -20,6 +20,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _farmNameController = TextEditingController();
   final String _biodigesterType = 'Small-scale (Home use)';
+  String? _validationError;
+
+  /// Validates registration input. Returns an error message, or null if valid.
+  String? _validateInput() {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final farmName = _farmNameController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty || email.isEmpty || farmName.isEmpty) {
+      return 'Veuillez remplir tous les champs obligatoires.';
+    }
+    final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
+    if (!emailRegex.hasMatch(email)) {
+      return 'Adresse email invalide.';
+    }
+    if (password.length < 8) {
+      return 'Le mot de passe doit contenir au moins 8 caractères.';
+    }
+    final phoneRegex = RegExp(r'^\+?[0-9\s-]{6,20}$');
+    if (!phoneRegex.hasMatch(phone)) {
+      return 'Numéro de téléphone invalide.';
+    }
+    if (!_agreeTerms) {
+      return 'Vous devez accepter les conditions d\'utilisation.';
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,16 +244,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
               builder: (ctx, auth, __) {
                 return Column(
                   children: [
-                    if (auth.error != null)
+                    if (_validationError != null || auth.error != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(auth.error!,
+                        child: Text(_validationError ?? auth.error!,
                             style: const TextStyle(color: AppTheme.error, fontSize: 13)),
                       ),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: auth.isLoading ? null : () async {
+                          final validationError = _validateInput();
+                          if (validationError != null) {
+                            setState(() => _validationError = validationError);
+                            return;
+                          }
+                          setState(() => _validationError = null);
                           final success = await auth.signUp(
                             email: _emailController.text.trim(),
                             password: _passwordController.text,

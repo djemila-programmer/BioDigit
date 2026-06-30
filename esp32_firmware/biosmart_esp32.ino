@@ -34,8 +34,8 @@
 
 #define FIREBASE_HOST   "your-project-default-rtdb.firebaseio.com"
 #define FIREBASE_API_KEY "YOUR_FIREBASE_API_KEY"
-#define FIREBASE_USER_EMAIL "esp32@biosmart.bf"
-#define FIREBASE_USER_PASSWORD "esp32password"
+#define FIREBASE_USER_EMAIL "YOUR_ESP32_DEVICE_EMAIL"
+#define FIREBASE_USER_PASSWORD "YOUR_ESP32_DEVICE_PASSWORD"
 
 // ─── Pin Definitions ──────────────────────────────────────────────────────
 

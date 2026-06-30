@@ -28,21 +28,36 @@ service cloud.firestore {
       return request.auth.token.email != null;
     }
 
+    function hasValidUserShape() {
+      return request.resource.data.keys().hasAll(['fullName', 'email', 'phone', 'farmName', 'role']) &&
+        request.resource.data.role is string &&
+        request.resource.data.email is string;
+    }
+
+    // True when the request does not attempt to change the immutable `role`
+    // field of an existing document. Prevents privilege escalation.
+    function roleUnchanged() {
+      return request.resource.data.role == resource.data.role;
+    }
+
     // ─── Users Collection ───────────────────────────────────────────────
     // Users can read/update their own profile. Admins can read all.
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
 
-      // Validate user data structure
-      allow write: if isAuthenticated() && (
-        request.resource.data.keys().hasAll(['fullName', 'email', 'phone', 'farmName', 'role']) &&
-        request.resource.data.role is string &&
-        request.resource.data.email is string
+      // New accounts may only be created by their own owner and must start
+      // with the non-privileged 'user' role.
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
+        hasValidUserShape() && request.resource.data.role == 'user';
+
+      // Owners may update their own profile but cannot change their role.
+      // Only admins may change roles (or any user document).
+      allow update: if hasValidUserShape() && (
+        (isOwner(userId) && roleUnchanged()) || isAdmin()
       );
+
+      allow delete: if isAdmin();
     }
 
     // ─── Farms Collection ───────────────────────────────────────────────
@@ -84,7 +99,7 @@ service cloud.firestore {
 
     match /history/{userId}/readings/{readingId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isAuthenticated();
+      allow create: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -109,7 +124,7 @@ service cloud.firestore {
 
     match /notifications/{userId}/{notificationId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow write: if isAuthenticated();
+      allow write: if isOwner(userId) || isAdmin();
     }
   }
 }
