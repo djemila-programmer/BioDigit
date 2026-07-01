@@ -1,16 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../main.dart';
+import '../utils/severity_style.dart' as severity_style;
+import 'firebase_service_mixin.dart';
 
 /// Firestore-based alert service for smart alert management.
-class AlertService {
-  FirebaseFirestore? _firestore;
-
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
+class AlertService with FirebaseServiceMixin {
+  FirebaseFirestore? get _fs => firestoreOrNull;
 
   /// Stream of active alerts (real-time), ordered by timestamp descending.
   ///
@@ -248,27 +243,9 @@ class SmartAlert {
     );
   }
 
-  Color get severityColor {
-    switch (severity) {
-      case 'critical':
-        return const Color(0xFFBA1A1A);
-      case 'warning':
-        return const Color(0xFF7A5649);
-      default:
-        return const Color(0xFF717A6D);
-    }
-  }
+  Color get severityColor => severity_style.severityColor(severity);
 
-  IconData get icon {
-    switch (severity) {
-      case 'critical':
-        return Icons.error;
-      case 'warning':
-        return Icons.warning;
-      default:
-        return Icons.info;
-    }
-  }
+  IconData get icon => severity_style.severityIcon(severity);
 
   String get timeAgo {
     if (timestamp == null) return '';

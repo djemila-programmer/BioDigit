@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/context_extensions.dart';
 import '../widgets/app_header.dart';
 import '../models/biodigester_model.dart';
 
@@ -100,11 +101,9 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Thresholds saved successfully'),
-                      backgroundColor: AppTheme.primary,
-                    ),
+                  context.showSnackBar(
+                    'Thresholds saved successfully',
+                    backgroundColor: AppTheme.primary,
                   );
                 },
                 icon: const Icon(Icons.save),

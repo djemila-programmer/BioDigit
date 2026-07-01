@@ -1,19 +1,14 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../main.dart';
+import 'firebase_service_mixin.dart';
 import 'sensor_service.dart';
 
 /// Push notification service using Firebase Cloud Messaging + local notifications.
-class NotificationService {
-  FirebaseMessaging? _fcm;
+class NotificationService with FirebaseServiceMixin {
   FlutterLocalNotificationsPlugin? _localNotifications;
   bool _initialized = false;
 
-  FirebaseMessaging? get _fcmInst {
-    if (!firebaseReady) return null;
-    _fcm ??= FirebaseMessaging.instance;
-    return _fcm;
-  }
+  FirebaseMessaging? get _fcmInst => messagingOrNull;
 
   FlutterLocalNotificationsPlugin? get _localNotif {
     _localNotifications ??= FlutterLocalNotificationsPlugin();

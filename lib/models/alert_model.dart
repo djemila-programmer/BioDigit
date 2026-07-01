@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/severity_style.dart' as severity_style;
 
 class AlertModel {
   final String id;
@@ -21,27 +22,10 @@ class AlertModel {
     required this.icon,
   });
 
-  Color get severityColor {
-    switch (severity) {
-      case 'critical':
-        return const Color(0xFFBA1A1A);
-      case 'warning':
-        return const Color(0xFF7A5649);
-      default:
-        return const Color(0xFF717A6D);
-    }
-  }
+  Color get severityColor => severity_style.severityColor(severity);
 
-  Color get severityContainerColor {
-    switch (severity) {
-      case 'critical':
-        return const Color(0xFFFFDAD6);
-      case 'warning':
-        return const Color(0xFFFDCDBC);
-      default:
-        return const Color(0xFFE2E2E2);
-    }
-  }
+  Color get severityContainerColor =>
+      severity_style.severityContainerColor(severity);
 
   static List<AlertModel> mockAlerts = [
     AlertModel(

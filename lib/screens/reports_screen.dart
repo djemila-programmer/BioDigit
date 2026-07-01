@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/context_extensions.dart';
 import '../widgets/app_header.dart';
 import '../services/pdf_service.dart';
 import '../services/farm_service.dart';
@@ -55,15 +56,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final filePath = await pdfService.savePdf(pdf, fileName);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rapport généré: $filePath')),
-        );
+        context.showSnackBar('Rapport généré: $filePath');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
+        context.showSnackBar('Erreur: ${e.toString()}');
       }
     }
     if (mounted) setState(() => _isGenerating = false);

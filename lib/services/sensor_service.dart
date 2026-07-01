@@ -1,25 +1,20 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../main.dart';
+import 'firebase_service_mixin.dart';
 
 /// Real-time sensor data service.
 /// Reads live sensor data pushed by ESP32 to Firebase Realtime Database.
-class SensorService {
+class SensorService with FirebaseServiceMixin {
   DatabaseReference? _rtDb;
-  FirebaseFirestore? _firestore;
 
   DatabaseReference? get _dbRef {
-    if (!firebaseReady) return null;
+    if (firestoreOrNull == null) return null;
     _rtDb ??= FirebaseDatabase.instance.ref();
     return _rtDb;
   }
 
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
+  FirebaseFirestore? get _fs => firestoreOrNull;
 
   // ─── Real-Time Sensor Stream from Firebase RTDB ─────────────────────────
 

@@ -2,26 +2,15 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '../main.dart';
 import '../models/user_model.dart';
+import 'firebase_service_mixin.dart';
 
 /// Firebase Authentication service for user registration, login, logout,
 /// and password reset.
-class AuthService {
-  FirebaseAuth? _auth;
-  FirebaseFirestore? _firestore;
+class AuthService with FirebaseServiceMixin {
+  FirebaseAuth? get _authInstance => authOrNull;
 
-  FirebaseAuth? get _authInstance {
-    if (!firebaseReady) return null;
-    _auth ??= FirebaseAuth.instance;
-    return _auth;
-  }
-
-  FirebaseFirestore? get _firestoreInstance {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
+  FirebaseFirestore? get _firestoreInstance => firestoreOrNull;
 
   /// Current authenticated user (null if signed out).
   User? get currentUser => _authInstance?.currentUser;
