@@ -1,19 +1,16 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../main.dart';
+import 'firebase_service_mixin.dart';
 import 'sensor_service.dart';
 
 /// Real anomaly detection engine based on actual sensor readings.
 /// No mock data — all scores are computed from live values.
-class AnomalyService {
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    return FirebaseFirestore.instance;
-  }
+class AnomalyService with FirebaseServiceMixin {
+  FirebaseFirestore? get _fs => firestoreOrNull;
 
   String? get _uid {
-    if (!firebaseReady) return 'demo-user';
+    if (authOrNull == null) return 'demo-user';
     try {
       return FirebaseAuth.instance.currentUser?.uid ?? 'demo-user';
     } catch (_) {

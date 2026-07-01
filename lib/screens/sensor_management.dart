@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/trend_style.dart';
 import '../theme/app_theme.dart';
 import '../models/sensor_model.dart';
 import '../widgets/app_header.dart';
@@ -147,7 +148,7 @@ class _SensorCard extends StatelessWidget {
               _infoChip(Icons.signal_cellular_alt, sensor.signalQuality, AppTheme.tertiary),
               const SizedBox(width: 8),
               _infoChip(
-                sensor.trend == 'rising' ? Icons.trending_up : sensor.trend == 'falling' ? Icons.trending_down : Icons.trending_flat,
+                trendIcon(sensor.trend),
                 sensor.trend,
                 sensor.trend == 'falling' ? AppTheme.error : AppTheme.primary,
               ),

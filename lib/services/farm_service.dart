@@ -1,25 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../main.dart';
+import 'firebase_service_mixin.dart';
 
 /// Firestore-based farm management service with full CRUD operations.
-class FarmService {
-  FirebaseFirestore? _firestore;
-  FirebaseAuth? _auth;
+class FarmService with FirebaseServiceMixin {
+  FirebaseFirestore? get _fs => firestoreOrNull;
 
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
+  FirebaseAuth? get _authInst => authOrNull;
 
-  FirebaseAuth? get _authInst {
-    if (!firebaseReady) return null;
-    _auth ??= FirebaseAuth.instance;
-    return _auth;
-  }
-
-  String? get _uid => _authInst?.currentUser?.uid ?? (firebaseReady ? null : 'demo-user');
+  String? get _uid =>
+      _authInst?.currentUser?.uid ?? (authOrNull == null ? 'demo-user' : null);
 
   // ─── Farm CRUD ──────────────────────────────────────────────────────────
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/trend_style.dart';
 import '../theme/app_theme.dart';
 import '../models/biodigester_model.dart';
 
@@ -214,19 +215,16 @@ class TrendIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IconData icon;
+    final IconData icon = trendIcon(trend);
     Color color;
     switch (trend) {
       case 'rising':
-        icon = Icons.trending_up;
         color = const Color(0xFF1B5E20);
         break;
       case 'falling':
-        icon = Icons.trending_down;
         color = AppTheme.error;
         break;
       default:
-        icon = Icons.trending_flat;
         color = AppTheme.outline;
     }
     return Icon(icon, size: 16, color: color);

@@ -1,26 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../main.dart';
+import 'firebase_service_mixin.dart';
 import 'sensor_service.dart';
 
 /// Historical data service: automatic logging and chart data retrieval.
-class HistoryService {
-  FirebaseFirestore? _firestore;
-  FirebaseAuth? _auth;
+class HistoryService with FirebaseServiceMixin {
+  FirebaseFirestore? get _fs => firestoreOrNull;
 
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
+  FirebaseAuth? get _authInst => authOrNull;
 
-  FirebaseAuth? get _authInst {
-    if (!firebaseReady) return null;
-    _auth ??= FirebaseAuth.instance;
-    return _auth;
-  }
-
-  String? get _uid => _authInst?.currentUser?.uid ?? (firebaseReady ? null : 'demo-user');
+  String? get _uid =>
+      _authInst?.currentUser?.uid ?? (authOrNull == null ? 'demo-user' : null);
 
   // ─── Automatic Data Logging ─────────────────────────────────────────────
 
