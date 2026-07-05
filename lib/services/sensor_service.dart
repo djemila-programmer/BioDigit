@@ -1,119 +1,90 @@
 import 'dart:async';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../main.dart';
+import '../supabase.dart';
 
 /// Real-time sensor data service.
-/// Reads live sensor data pushed by ESP32 to Firebase Realtime Database.
+/// Reads live sensor data pushed by ESP32 to Supabase Realtime.
 class SensorService {
-  DatabaseReference? _rtDb;
-  FirebaseFirestore? _firestore;
-
-  DatabaseReference? get _dbRef {
-    if (!firebaseReady) return null;
-    _rtDb ??= FirebaseDatabase.instance.ref();
-    return _rtDb;
-  }
-
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
-
-  // ─── Real-Time Sensor Stream from Firebase RTDB ─────────────────────────
+  // ─── Real-Time Sensor Stream from Supabase Realtime ─────────────────────
 
   /// Live stream of all sensor readings from ESP32.
   Stream<SensorReading> sensorDataStream() {
-    if (_dbRef == null) {
-      // Demo mode: emit realistic mock data every 3 seconds
-      return Stream.periodic(const Duration(seconds: 3), (i) {
-        return SensorReading(
-          temperature: 35.5 + (i % 5) * 0.4,
-          pressure: 1.05 + (i % 3) * 0.02,
-          methane: 310 + (i % 7) * 12.0,
-          slurryLevel: 72 + (i % 4) * 2.0,
-          timestamp: DateTime.now(),
-          temperatureTrend: i % 2 == 0 ? 'up' : 'stable',
-          pressureTrend: 'stable',
-          methaneTrend: i % 3 == 0 ? 'up' : 'down',
-          slurryTrend: 'stable',
-        );
-      });
-    }
-    return _dbRef!.child('sensors').onValue.map((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data == null) return SensorReading.empty();
-      return SensorReading.fromFirebase(data);
-    });
+    return supabase
+        .from('sensor_readings')
+        .stream(primaryKey: ['id'])
+        .map((rows) {
+          if (rows.isEmpty) return SensorReading.empty();
+          final latest = rows.last;
+          return SensorReading.fromSupabase(latest);
+        });
   }
 
   /// Live stream for a single sensor type.
   Stream<double> singleSensorStream(String sensorKey) {
-    if (_dbRef == null) {
-      return Stream.periodic(const Duration(seconds: 3), (i) => 35.0 + i % 5);
-    }
-    return _dbRef!.child('sensors/$sensorKey/value').onValue.map((event) {
-      final val = event.snapshot.value;
-      if (val == null) return 0.0;
-      return (val as num).toDouble();
-    });
+    return supabase
+        .from('sensor_readings')
+        .stream(primaryKey: ['id'])
+        .map((rows) {
+          if (rows.isEmpty) return 0.0;
+          final latest = rows.last;
+          return (latest[sensorKey] as num?)?.toDouble() ?? 0.0;
+        });
   }
 
-  /// ESP32 controller status stream from RTDB.
+  /// ESP32 controller status stream from Supabase Realtime.
   Stream<Esp32StatusData> esp32StatusStream() {
-    if (_dbRef == null) {
-      return Stream.periodic(const Duration(seconds: 5), (_) {
-        return Esp32StatusData(
-          connected: true, wifiSignal: -42, firmwareVersion: 'v2.4.1-bf',
-          batteryLevel: 87, ipAddress: '192.168.1.105',
-          lastSync: DateTime.now(), cpuTemp: 45.2, uptime: '3d 14h',
-        );
-      });
-    }
-    return _dbRef!.child('esp32').onValue.map((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data == null) return Esp32StatusData.disconnected();
-      return Esp32StatusData.fromFirebase(data);
-    });
+    return supabase
+        .from('esp32_status')
+        .stream(primaryKey: ['id'])
+        .map((rows) {
+          if (rows.isEmpty) return Esp32StatusData.disconnected();
+          final latest = rows.last;
+          return Esp32StatusData.fromSupabase(latest);
+        });
   }
 
   /// One-shot read of all current sensor values.
   Future<SensorReading> getCurrentReadings() async {
-    if (_dbRef == null) {
-      return SensorReading(
-        temperature: 36.8, pressure: 1.08, methane: 325,
-        slurryLevel: 75, timestamp: DateTime.now(),
-      );
+    try {
+      final response = await supabase
+          .from('sensor_readings')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (response == null) return SensorReading.empty();
+      return SensorReading.fromSupabase(response);
+    } catch (e) {
+      return SensorReading.empty();
     }
-    final snapshot = await _dbRef!.child('sensors').get();
-    final data = snapshot.value as Map<dynamic, dynamic>?;
-    if (data == null) return SensorReading.empty();
-    return SensorReading.fromFirebase(data);
   }
 
   /// One-shot read of ESP32 status.
   Future<Esp32StatusData> getEsp32Status() async {
-    if (_dbRef == null) {
-      return Esp32StatusData(
-        connected: true, wifiSignal: -42, firmwareVersion: 'v2.4.1-bf',
-        batteryLevel: 87, ipAddress: '192.168.1.105',
-        lastSync: DateTime.now(), cpuTemp: 45.2, uptime: '3d 14h',
-      );
+    try {
+      final response = await supabase
+          .from('esp32_status')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (response == null) return Esp32StatusData.disconnected();
+      return Esp32StatusData.fromSupabase(response);
+    } catch (e) {
+      return Esp32StatusData.disconnected();
     }
-    final snapshot = await _dbRef!.child('esp32').get();
-    final data = snapshot.value as Map<dynamic, dynamic>?;
-    if (data == null) return Esp32StatusData.disconnected();
-    return Esp32StatusData.fromFirebase(data);
   }
 
-  // ─── Threshold Configuration (Firestore) ────────────────────────────────
+  // ─── Threshold Configuration (Supabase) ──────────────────────────────────
 
   Future<Map<String, dynamic>> getThresholdConfig() async {
     try {
-      if (_fs != null) {
-        final doc = await _fs!.collection('config').doc('thresholds').get();
-        if (doc.exists) return doc.data()!;
+      final response = await supabase
+          .from('config')
+          .select()
+          .eq('key', 'thresholds')
+          .maybeSingle();
+      if (response != null) {
+        return response['value'] as Map<String, dynamic>;
       }
     } catch (_) {}
     return {
@@ -125,21 +96,28 @@ class SensorService {
   }
 
   Future<void> saveThresholdConfig(Map<String, dynamic> config) async {
-    if (_fs == null) return;
-    await _fs!.collection('config').doc('thresholds').set(config);
+    await supabase.from('config').upsert({
+      'key': 'thresholds',
+      'value': config,
+    });
   }
 
-  // ─── Sensor Health (Firestore) ──────────────────────────────────────────
+  // ─── Sensor Health (Supabase) ────────────────────────────────────────────
 
   Future<List<SensorHealthRecord>> getSensorHealthRecords() async {
-    if (_fs == null) return [];
-    final snapshot = await _fs!.collection('sensorHealth').get();
-    return snapshot.docs.map((doc) => SensorHealthRecord.fromFirestore(doc)).toList();
+    try {
+      final response = await supabase.from('sensor_health').select();
+      return response.map((row) => SensorHealthRecord.fromSupabase(row)).toList();
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<void> updateSensorHealth(String sensorId, Map<String, dynamic> data) async {
-    if (_fs == null) return;
-    await _fs!.collection('sensorHealth').doc(sensorId).set(data, SetOptions(merge: true));
+    await supabase.from('sensor_health').upsert({
+      'id': sensorId,
+      ...data,
+    });
   }
 }
 
@@ -170,42 +148,40 @@ class SensorReading {
   });
 
   factory SensorReading.empty() => SensorReading(
-    temperature: 0, pressure: 0, methane: 0, slurryLevel: 0,
-    timestamp: DateTime.now(),
-  );
+        temperature: 0,
+        pressure: 0,
+        methane: 0,
+        slurryLevel: 0,
+        timestamp: DateTime.now(),
+      );
 
-  factory SensorReading.fromFirebase(Map<dynamic, dynamic> data) {
+  factory SensorReading.fromSupabase(Map<String, dynamic> data) {
     return SensorReading(
-      temperature: _extractValue(data, 'temperature'),
-      pressure: _extractValue(data, 'pressure'),
-      methane: _extractValue(data, 'methane'),
-      slurryLevel: _extractValue(data, 'slurryLevel'),
-      timestamp: data['timestamp'] != null
-          ? DateTime.tryParse(data['timestamp'].toString()) ?? DateTime.now()
+      temperature: (data['temperature'] as num?)?.toDouble() ?? 0.0,
+      pressure: (data['pressure'] as num?)?.toDouble() ?? 0.0,
+      methane: (data['methane'] as num?)?.toDouble() ?? 0.0,
+      slurryLevel: (data['slurry_level'] as num?)?.toDouble() ?? 0.0,
+      timestamp: data['created_at'] != null
+          ? DateTime.tryParse(data['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      temperatureTrend: data['temperatureTrend']?.toString(),
-      pressureTrend: data['pressureTrend']?.toString(),
-      methaneTrend: data['methaneTrend']?.toString(),
-      slurryTrend: data['slurryTrend']?.toString(),
+      temperatureTrend: data['temperature_trend']?.toString(),
+      pressureTrend: data['pressure_trend']?.toString(),
+      methaneTrend: data['methane_trend']?.toString(),
+      slurryTrend: data['slurry_trend']?.toString(),
     );
   }
 
-  static double _extractValue(Map<dynamic, dynamic> data, String key) {
-    final raw = data[key];
-    if (raw == null) return 0.0;
-    if (raw is Map) {
-      return (raw['value'] as num?)?.toDouble() ?? 0.0;
-    }
-    return (raw as num?)?.toDouble() ?? 0.0;
-  }
-
   Map<String, dynamic> toJson() => {
-    'temperature': temperature,
-    'pressure': pressure,
-    'methane': methane,
-    'slurryLevel': slurryLevel,
-    'timestamp': timestamp.toIso8601String(),
-  };
+        'temperature': temperature,
+        'pressure': pressure,
+        'methane': methane,
+        'slurry_level': slurryLevel,
+        'temperature_trend': temperatureTrend,
+        'pressure_trend': pressureTrend,
+        'methane_trend': methaneTrend,
+        'slurry_trend': slurryTrend,
+        'timestamp': timestamp.toIso8601String(),
+      };
 }
 
 /// ESP32 controller status data.
@@ -231,31 +207,36 @@ class Esp32StatusData {
   });
 
   factory Esp32StatusData.disconnected() => Esp32StatusData(
-    connected: false, wifiSignal: 0, firmwareVersion: 'N/A',
-    batteryLevel: 0, ipAddress: 'N/A', cpuTemp: 0, uptime: '0',
-  );
+        connected: false,
+        wifiSignal: 0,
+        firmwareVersion: 'N/A',
+        batteryLevel: 0,
+        ipAddress: 'N/A',
+        cpuTemp: 0,
+        uptime: '0',
+      );
 
-  factory Esp32StatusData.fromFirebase(Map<dynamic, dynamic> data) {
+  factory Esp32StatusData.fromSupabase(Map<String, dynamic> data) {
     return Esp32StatusData(
       connected: data['connected'] == true,
-      wifiSignal: (data['wifiSignal'] as num?)?.toInt() ?? 0,
-      firmwareVersion: data['firmwareVersion']?.toString() ?? 'N/A',
-      batteryLevel: (data['batteryLevel'] as num?)?.toInt() ?? 0,
-      ipAddress: data['ipAddress']?.toString() ?? 'N/A',
-      lastSync: data['lastSync'] != null
-          ? DateTime.tryParse(data['lastSync'].toString())
+      wifiSignal: (data['wifi_signal'] as num?)?.toInt() ?? 0,
+      firmwareVersion: data['firmware_version']?.toString() ?? 'N/A',
+      batteryLevel: (data['battery_level'] as num?)?.toInt() ?? 0,
+      ipAddress: data['ip_address']?.toString() ?? 'N/A',
+      lastSync: data['last_sync'] != null
+          ? DateTime.tryParse(data['last_sync'].toString())
           : null,
-      cpuTemp: (data['cpuTemp'] as num?)?.toDouble() ?? 0,
+      cpuTemp: (data['cpu_temp'] as num?)?.toDouble() ?? 0,
       uptime: data['uptime']?.toString() ?? '0',
     );
   }
 }
 
-/// Sensor health record stored in Firestore.
+/// Sensor health record stored in Supabase.
 class SensorHealthRecord {
   final String sensorId;
   final String sensorModel;
-  final String status; // active, warning, critical, offline
+  final String status;
   final DateTime? lastCalibration;
   final DateTime? nextMaintenance;
   final int batteryLevel;
@@ -271,20 +252,19 @@ class SensorHealthRecord {
     required this.signalQuality,
   });
 
-  factory SensorHealthRecord.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory SensorHealthRecord.fromSupabase(Map<String, dynamic> data) {
     return SensorHealthRecord(
-      sensorId: doc.id,
-      sensorModel: data['sensorModel'] ?? '',
-      status: data['status'] ?? 'unknown',
-      lastCalibration: data['lastCalibration'] != null
-          ? DateTime.tryParse(data['lastCalibration'])
+      sensorId: data['id']?.toString() ?? '',
+      sensorModel: data['sensor_model']?.toString() ?? '',
+      status: data['status']?.toString() ?? 'unknown',
+      lastCalibration: data['last_calibration'] != null
+          ? DateTime.tryParse(data['last_calibration'].toString())
           : null,
-      nextMaintenance: data['nextMaintenance'] != null
-          ? DateTime.tryParse(data['nextMaintenance'])
+      nextMaintenance: data['next_maintenance'] != null
+          ? DateTime.tryParse(data['next_maintenance'].toString())
           : null,
-      batteryLevel: (data['batteryLevel'] as num?)?.toInt() ?? 0,
-      signalQuality: data['signalQuality'] ?? 'Unknown',
+      batteryLevel: (data['battery_level'] as num?)?.toInt() ?? 0,
+      signalQuality: data['signal_quality']?.toString() ?? 'Unknown',
     );
   }
 }

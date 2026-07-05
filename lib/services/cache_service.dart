@@ -44,7 +44,7 @@ class CacheService {
       temperature: (map['temperature'] as num?)?.toDouble() ?? 0,
       pressure: (map['pressure'] as num?)?.toDouble() ?? 0,
       methane: (map['methane'] as num?)?.toDouble() ?? 0,
-      slurryLevel: (map['slurryLevel'] as num?)?.toDouble() ?? 0,
+      slurryLevel: (map['slurry_level'] ?? map['slurryLevel'] as num?)?.toDouble() ?? 0,
       timestamp: map['timestamp'] != null
           ? DateTime.tryParse(map['timestamp']) ?? DateTime.now()
           : DateTime.now(),

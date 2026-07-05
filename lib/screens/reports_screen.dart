@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_nav_bar.dart';
 import '../services/pdf_service.dart';
+import '../services/excel_service.dart';
 import '../services/farm_service.dart';
 import '../services/history_service.dart';
 import '../services/anomaly_service.dart';
@@ -16,7 +18,7 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  final String _selectedPeriod = 'weekly';
+  String _selectedPeriod = 'weekly';
   bool _isGenerating = false;
 
   Future<void> _generatePdf() async {
@@ -69,11 +71,60 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (mounted) setState(() => _isGenerating = false);
   }
 
+  Future<void> _generateExcel() async {
+    setState(() => _isGenerating = true);
+    try {
+      final farmService = context.read<FarmService>();
+      final historyService = context.read<HistoryService>();
+      final anomalyService = context.read<AnomalyService>();
+      final excelService = context.read<ExcelService>();
+      final sensorProv = context.read<SensorProvider>();
+
+      final farms = await farmService.getUserFarms();
+      final farm = farms.isNotEmpty
+          ? farms.first
+          : FarmData(id: '', ownerId: '', name: 'Ferme BioSmart', location: 'Plateau Central, Burkina Faso',
+              biodigesterType: 'Fixed-dome', biodigesterCapacity: 10);
+
+      final production = await historyService.getProductionSummary(_selectedPeriod);
+      final history = await historyService.getLast7Days();
+      final reading = sensorProv.latestReading;
+      final anomaly = reading != null
+          ? anomalyService.analyze(reading)
+          : AnomalyReport(healthScore: 0, riskScore: 0, severityLevel: 'N/A',
+              predictionConfidence: 0, sensorAnomalies: 0, recommendedActions: 0,
+              sensorResults: [], actions: [], timestamp: DateTime.now());
+
+      final filePath = await excelService.generateReport(
+        farm: farm,
+        production: production,
+        anomaly: anomaly,
+        historyData: history,
+        period: _selectedPeriod,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rapport Excel généré: $filePath')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: ${e.toString()}')),
+        );
+      }
+    }
+    if (mounted) setState(() => _isGenerating = false);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: const AppHeader(title: 'Reports', showBackButton: true),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(
@@ -96,10 +147,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 children: [
                   const Text('Biogas Production Report', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
                   const SizedBox(height: 4),
-                  Text('Weekly Summary · Jan 15 - Jan 21', style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8))),
+                  Text('${_periodLabel(_selectedPeriod)} Summary · Jan 15 - Jan 21', style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8))),
                   const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.spaceAround,
                     children: [
                       _reportStat('87.5', 'm³ Total', Colors.white),
                       _reportStat('12.5', 'm³/day Avg', AppTheme.primaryFixed),
@@ -111,43 +164,51 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             const SizedBox(height: 24),
             // Production chart placeholder
-            Text('Production Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Production Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Container(
               height: 200,
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
               ),
               child: CustomPaint(
                 size: const Size(double.infinity, 160),
-                painter: _ProductionChartPainter(),
+                painter: _ProductionChartPainter(
+                  gridColor: cs.outlineVariant.withValues(alpha: 0.3),
+                  primaryColor: cs.primary,
+                ),
               ),
             ),
             const SizedBox(height: 24),
             // Key metrics grid
-            Text('Key Metrics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Key Metrics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.6,
-              children: [
-                _metricTile(Icons.thermostat, 'Avg Temperature', '38.2°C', '±0.5°C', AppTheme.primary),
-                _metricTile(Icons.speed, 'Avg Pressure', '1.05 bar', 'Stable', AppTheme.tertiary),
-                _metricTile(Icons.gas_meter, 'Methane Purity', '64.2%', '+1.8%', AppTheme.secondary),
-                _metricTile(Icons.bolt, 'Energy Output', '42.8 kWh', '+12%', AppTheme.primary),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 520;
+                return GridView.count(
+                  crossAxisCount: narrow ? 1 : 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: narrow ? 2.0 : 1.6,
+                  children: [
+                    _metricTile(Icons.thermostat, 'Avg Temperature', '38.2°C', '±0.5°C', AppTheme.primary),
+                    _metricTile(Icons.speed, 'Avg Pressure', '1.05 bar', 'Stable', AppTheme.tertiary),
+                    _metricTile(Icons.gas_meter, 'Methane Purity', '64.2%', '+1.8%', AppTheme.secondary),
+                    _metricTile(Icons.bolt, 'Energy Output', '42.8 kWh', '+12%', AppTheme.primary),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
             // Recommendations
-            Text('AI Recommendations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('AI Recommendations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             _recommendation(
               Icons.trending_up,
@@ -169,17 +230,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             const SizedBox(height: 16),
             // Report type selector
-            Text('Report Period', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Report Period', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Row(
               children: [
-                _periodChip('Daily', false),
+                _periodChip('Daily', _selectedPeriod == 'daily', () => setState(() => _selectedPeriod = 'daily')),
                 const SizedBox(width: 8),
-                _periodChip('Weekly', true),
+                _periodChip('Weekly', _selectedPeriod == 'weekly', () => setState(() => _selectedPeriod = 'weekly')),
                 const SizedBox(width: 8),
-                _periodChip('Monthly', false),
+                _periodChip('Monthly', _selectedPeriod == 'monthly', () => setState(() => _selectedPeriod = 'monthly')),
                 const SizedBox(width: 8),
-                _periodChip('Annual', false),
+                _periodChip('Annual', _selectedPeriod == 'annual', () => setState(() => _selectedPeriod = 'annual')),
               ],
             ),
             const SizedBox(height: 24),
@@ -194,11 +255,24 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             ),
             const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isGenerating ? null : _generateExcel,
+                icon: const Icon(Icons.table_chart),
+                label: Text(_isGenerating ? 'Generating...' : 'Export Excel'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF1B5E20),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: _isGenerating ? null : _generateExcel,
                     icon: const Icon(Icons.table_chart),
                     label: const Text('Export Excel'),
                   ),
@@ -206,7 +280,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Share link copied to clipboard.')),
+                      );
+                    },
                     icon: const Icon(Icons.share),
                     label: const Text('Share Report'),
                   ),
@@ -219,22 +297,38 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _periodChip(String label, bool selected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected ? AppTheme.primary : AppTheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(9999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: selected ? AppTheme.onPrimary : AppTheme.onSurfaceVariant,
+  Widget _periodChip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(9999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: selected ? AppTheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
+  }
+
+  String _periodLabel(String period) {
+    switch (period) {
+      case 'daily':
+        return 'Daily';
+      case 'monthly':
+        return 'Monthly';
+      case 'annual':
+        return 'Annual';
+      default:
+        return 'Weekly';
+    }
   }
 
   Widget _reportStat(String value, String label, Color color) {
@@ -248,12 +342,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Widget _metricTile(IconData icon, String title, String value, String change, Color color) {
-    return Container(
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +359,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             children: [
               Icon(icon, size: 18, color: color),
               const SizedBox(width: 8),
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant))),
+              Expanded(child: Text(title, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant))),
             ],
           ),
           const SizedBox(height: 8),
@@ -271,7 +367,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.onSurface)),
+              Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: cs.onSurface)),
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -282,17 +378,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
         ],
       ),
-    );
+    );});
   }
 
   Widget _recommendation(IconData icon, String title, String desc, Color color) {
-    return Container(
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,26 +405,31 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.onSurface)),
                 const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant, height: 1.4)),
+                Text(desc, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
               ],
             ),
           ),
         ],
       ),
-    );
+    );});
   }
 }
 
 class _ProductionChartPainter extends CustomPainter {
+  final Color gridColor;
+  final Color primaryColor;
+
+  _ProductionChartPainter({required this.gridColor, required this.primaryColor});
+
   @override
   void paint(Canvas canvas, Size size) {
     final data = [0.5, 0.6, 0.55, 0.7, 0.65, 0.8, 0.75];
 
     // Grid lines
     final gridPaint = Paint()
-      ..color = AppTheme.outlineVariant.withValues(alpha: 0.3)
+      ..color = gridColor
       ..strokeWidth = 1;
     for (int i = 0; i <= 4; i++) {
       final y = (i / 4) * (size.height - 20);
@@ -335,7 +438,7 @@ class _ProductionChartPainter extends CustomPainter {
 
     // Line chart
     final paint = Paint()
-      ..color = AppTheme.primary
+      ..color = primaryColor
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -344,7 +447,7 @@ class _ProductionChartPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [AppTheme.primary.withValues(alpha: 0.2), AppTheme.primary.withValues(alpha: 0)],
+        colors: [primaryColor.withValues(alpha: 0.2), primaryColor.withValues(alpha: 0)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height - 20))
       ..style = PaintingStyle.fill;
 
@@ -364,7 +467,7 @@ class _ProductionChartPainter extends CustomPainter {
         fillPath.lineTo(x, y);
       }
       // Dot
-      canvas.drawCircle(Offset(x, y), 4, Paint()..color = AppTheme.primary);
+      canvas.drawCircle(Offset(x, y), 4, Paint()..color = primaryColor);
       canvas.drawCircle(Offset(x, y), 2, Paint()..color = Colors.white);
     }
 

@@ -17,20 +17,22 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppTheme.surfaceColor(context) : AppTheme.surface;
+    final borderColor = isDark ? AppTheme.borderStrong(context) : AppTheme.outlineVariant.withValues(alpha: 0.2);
+    final unselectedColor = isDark ? AppTheme.subtext(context) : AppTheme.onSurfaceVariant;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: surfaceColor,
         border: Border(
-          top: BorderSide(
-            color: AppTheme.outlineVariant.withValues(alpha: 0.2),
-            width: 1,
-          ),
+          top: BorderSide(color: borderColor, width: 1),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryContainer.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
+            color: AppTheme.primaryContainer.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -42,7 +44,7 @@ class BottomNavBar extends StatelessWidget {
             children: List.generate(_items.length, (index) {
               final item = _items[index];
               final isSelected = currentIndex == index;
-              return _buildNavItem(context, item, isSelected, index);
+              return _buildNavItem(context, item, isSelected, index, unselectedColor);
             }),
           ),
         ),
@@ -50,7 +52,7 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, _NavItem item, bool isSelected, int index) {
+  Widget _buildNavItem(BuildContext context, _NavItem item, bool isSelected, int index, Color unselectedColor) {
     return InkWell(
       onTap: () {
         if (currentIndex != index) {
@@ -64,6 +66,9 @@ class BottomNavBar extends StatelessWidget {
             ? BoxDecoration(
                 color: AppTheme.primaryContainer.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(9999),
+                border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.08),
+                ),
               )
             : null,
         child: Column(
@@ -71,8 +76,8 @@ class BottomNavBar extends StatelessWidget {
           children: [
             Icon(
               isSelected ? item.filledIcon : item.icon,
-              color: isSelected ? AppTheme.primary : AppTheme.onSurfaceVariant,
-              size: 24,
+              color: isSelected ? AppTheme.primary : unselectedColor,
+              size: 23,
             ),
             const SizedBox(height: 2),
             Text(
@@ -81,8 +86,8 @@ class BottomNavBar extends StatelessWidget {
                 fontSize: 11,
                 height: 16 / 11,
                 letterSpacing: 0.5,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? AppTheme.primary : AppTheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppTheme.primary : unselectedColor,
               ),
             ),
           ],

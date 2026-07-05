@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'firebase_options.dart';
-
+import 'supabase.dart';
 import 'theme/app_theme.dart';
 import 'routes.dart';
+import 'core/app_localizations.dart';
 
 import 'services/auth_service.dart';
 import 'services/sensor_service.dart';
@@ -15,46 +17,27 @@ import 'services/history_service.dart';
 import 'services/anomaly_service.dart';
 import 'services/notification_service.dart';
 import 'services/pdf_service.dart';
+import 'services/excel_service.dart';
 import 'services/cache_service.dart';
+import 'services/simulation_service.dart';
 import 'services/providers.dart';
-
-bool firebaseReady = false;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase initialization
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  await dotenv.load(fileName: '.env');
 
-    firebaseReady = true;
-    debugPrint('Firebase initialized successfully');
-  } catch (e) {
-    firebaseReady = false;
-    debugPrint('Firebase initialization error: $e');
-  }
+  await initSupabase();
 
-  // Cache initialization
   final cacheService = CacheService();
-  try {
-    await cacheService.initialize();
-  } catch (e) {
-    debugPrint('Cache initialization error: $e');
-  }
+  await cacheService.initialize();
 
-  // Notification initialization
+  // Open the theme box for dark mode persistence
+  await Hive.openBox('themeBox');
+  await Hive.openBox('localeBox');
+
   final notificationService = NotificationService();
-  try {
-    if (firebaseReady) {
-      await notificationService.initialize();
-    }
-  } catch (e) {
-    debugPrint('Notification initialization error: $e');
-  }
-
-  debugPrint('Firebase Ready = $firebaseReady');
+  await notificationService.initialize();
 
   runApp(
     BioSmartApp(
@@ -83,10 +66,11 @@ class BioSmartApp extends StatelessWidget {
     final historyService = HistoryService();
     final anomalyService = AnomalyService();
     final pdfService = PdfService();
+    final excelService = ExcelService();
+    final simulationService = SimulationService();
 
     return MultiProvider(
       providers: [
-        // Services
         Provider<AuthService>.value(value: authService),
         Provider<SensorService>.value(value: sensorService),
         Provider<AlertService>.value(value: alertService),
@@ -95,12 +79,11 @@ class BioSmartApp extends StatelessWidget {
         Provider<AnomalyService>.value(value: anomalyService),
         Provider<NotificationService>.value(value: notificationService),
         Provider<PdfService>.value(value: pdfService),
+        Provider<ExcelService>.value(value: excelService),
         Provider<CacheService>.value(value: cacheService),
+        Provider<SimulationService>.value(value: simulationService),
 
-        // State Providers
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(authService),
-        ),
+        ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
 
         ChangeNotifierProvider(
           create: (_) => SensorProvider(
@@ -108,32 +91,125 @@ class BioSmartApp extends StatelessWidget {
             historyService,
             notificationService,
             cacheService,
+            simulationService,
           ),
         ),
 
-        ChangeNotifierProvider(
-          create: (_) => AlertProvider(alertService),
-        ),
+        ChangeNotifierProvider(create: (_) => AlertProvider(alertService)),
+
+        ChangeNotifierProvider(create: (_) => AnomalyProvider(anomalyService)),
+
+        ChangeNotifierProvider(create: (_) => HistoryProvider(historyService)),
+
+        ChangeNotifierProvider(create: (_) => FarmProvider(farmService)),
 
         ChangeNotifierProvider(
-          create: (_) => AnomalyProvider(anomalyService),
+          create: (_) => NotificationProvider(notificationService),
         ),
 
-        ChangeNotifierProvider(
-          create: (_) => HistoryProvider(historyService),
-        ),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
 
         ChangeNotifierProvider(
           create: (_) => ConnectivityProvider()..startListening(),
         ),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'BioSmart Africa',
-        theme: AppTheme.theme,
-        initialRoute: AppRoutes.splash,
-        routes: AppRoutes.routes,
+      child: Consumer2<ThemeProvider, LocaleProvider>(
+        builder: (context, themeProvider, localeProvider, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'BioSmart Africa',
+            theme: AppTheme.theme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            locale: localeProvider.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            navigatorKey: AppNavigation.navigatorKey,
+            builder: (context, child) {
+              return AppSessionListener(child: child ?? const SizedBox.shrink());
+            },
+            initialRoute: AppRoutes.splash,
+            routes: AppRoutes.routes,
+          );
+        },
       ),
     );
   }
+}
+
+class AppNavigation {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+}
+
+class AppSessionListener extends StatefulWidget {
+  final Widget child;
+
+  const AppSessionListener({super.key, required this.child});
+
+  @override
+  State<AppSessionListener> createState() => _AppSessionListenerState();
+}
+
+class _AppSessionListenerState extends State<AppSessionListener> {
+  bool _hasRoutedRecovery = false;
+  bool _dataListenersStarted = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final auth = context.watch<AuthProvider>();
+
+    // ── Start data listeners once after successful authentication ──
+    if (auth.isAuthenticated && !_dataListenersStarted) {
+      _dataListenersStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<SensorProvider>().startListening();
+        context.read<AlertProvider>().startListening();
+        context.read<NotificationProvider>().startListening();
+      });
+    }
+
+    // Reset flag when user logs out so listeners restart on next login
+    if (!auth.isAuthenticated) {
+      _dataListenersStarted = false;
+    }
+
+    if (auth.isPasswordRecovery && !_hasRoutedRecovery) {
+      _hasRoutedRecovery = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppNavigation.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppRoutes.resetPassword,
+          (route) => false,
+        );
+        auth.clearRecoveryState();
+      });
+    }
+
+    if (!auth.isPasswordRecovery) {
+      _hasRoutedRecovery = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    // Stop listeners on dispose to avoid leaks
+    try {
+      context.read<SensorProvider>().stopListening();
+      context.read<AlertProvider>().stopListening();
+      context.read<NotificationProvider>().stopListening();
+    } catch (_) {}
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

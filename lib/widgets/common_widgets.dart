@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
-import '../models/biodigester_model.dart';
+import '../services/providers.dart';
 
 class StatusBadge extends StatelessWidget {
   final String label;
@@ -83,7 +84,7 @@ class ProgressIndicatorBar extends StatelessWidget {
       child: LinearProgressIndicator(
         value: progress,
         minHeight: height,
-        backgroundColor: AppTheme.surfaceContainer,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         valueColor: AlwaysStoppedAnimation<Color>(color),
       ),
     );
@@ -121,9 +122,9 @@ class MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,10 +145,10 @@ class MetricCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   letterSpacing: 0.1,
                 ),
               ),
@@ -155,7 +156,7 @@ class MetricCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceContainerHigh,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -173,19 +174,19 @@ class MetricCard extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 28,
                   height: 36 / 28,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(width: 2),
               Text(
                 unit,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
-                  color: AppTheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               if (trend != null) ...[                const SizedBox(width: 8),
@@ -198,7 +199,7 @@ class MetricCard extends StatelessWidget {
           if (lastUpdate != null) ...[            const SizedBox(height: 4),
             Text(
               'Updated $lastUpdate',
-              style: const TextStyle(fontSize: 10, color: AppTheme.outline),
+              style: TextStyle(fontSize: 10, color: AppTheme.subtext(context)),
             ),
           ],
         ],
@@ -239,94 +240,101 @@ class ESP32StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final esp = ESP32Status.mockStatus;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primary.withValues(alpha: 0.05),
-            AppTheme.primaryContainer.withValues(alpha: 0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProv, _) {
+        final esp = sensorProv.esp32Status;
+        final isConnected = sensorProv.isOnline;
+        final isSimulation = sensorProv.isSimulation;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primary.withValues(alpha: 0.05),
+                AppTheme.primaryContainer.withValues(alpha: 0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.memory, color: AppTheme.primary, size: 20),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.memory, color: AppTheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'ESP32 Controller',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.text(context)),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isSimulation ? const Color(0xFFFFF8E1) : const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    child: Text(
+                      isSimulation ? 'SIMULATION' : (isConnected ? 'CONNECTE' : 'DECONNECTE'),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSimulation ? const Color(0xFFF57F17) : const Color(0xFF1B5E20)),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'ESP32 Controller',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
-                ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _espItem(context, Icons.wifi, 'Wi-Fi Signal', isConnected ? 'Excellent' : 'N/A'),
+                  const SizedBox(width: 16),
+                  _espItem(context, Icons.sync, 'Last Sync', isConnected ? 'Now' : '--'),
+                ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: Text(
-                  esp.status.toUpperCase(),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
-                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _espItem(context, Icons.settings_applications, 'Firmware', esp?.firmwareVersion ?? 'v2.4.1-bf'),
+                  const SizedBox(width: 16),
+                  _espItem(context, Icons.battery_charging_full, 'Battery', esp != null ? '${esp.batteryLevel}%' : 'N/A'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _espItem(context, Icons.lan, 'IP Address', esp?.ipAddress ?? '192.168.1.100'),
+                  const SizedBox(width: 16),
+                  _espItem(context, Icons.timer, 'Uptime', esp?.uptime ?? '--'),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _espItem(Icons.wifi, 'Wi-Fi Signal', esp.wifiStrength),
-              const SizedBox(width: 16),
-              _espItem(Icons.sync, 'Last Sync', esp.lastSync),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _espItem(Icons.settings_applications, 'Firmware', esp.firmwareVersion),
-              const SizedBox(width: 16),
-              _espItem(Icons.battery_charging_full, 'Battery', '${esp.batteryLevel}%'),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _espItem(Icons.lan, 'IP Address', esp.ipAddress),
-              const SizedBox(width: 16),
-              _espItem(Icons.timer, 'Uptime', esp.uptime),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _espItem(IconData icon, String label, String value) {
+  Widget _espItem(BuildContext context, IconData icon, String label, String value) {
+    final cs = Theme.of(context).colorScheme;
     return Expanded(
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppTheme.onSurfaceVariant),
+          Icon(icon, size: 14, color: cs.onSurfaceVariant),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.outline)),
-                Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.onSurface), overflow: TextOverflow.ellipsis),
+                Text(label, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurface), overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -336,92 +344,98 @@ class ESP32StatusCard extends StatelessWidget {
   }
 }
 
-/// Firebase Connection Status Card
-class FirebaseStatusCard extends StatelessWidget {
-  const FirebaseStatusCard({super.key});
+/// Supabase Connection Status Card
+class SupabaseStatusCard extends StatelessWidget {
+  const SupabaseStatusCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final fb = FirebaseStatus.mockStatus;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.tertiary.withValues(alpha: 0.05),
-            AppTheme.tertiaryContainer.withValues(alpha: 0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.tertiary.withValues(alpha: 0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProv, _) {
+        final isConnected = sensorProv.isOnline;
+        final isSimulation = sensorProv.isSimulation;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.tertiary.withValues(alpha: 0.05),
+                AppTheme.tertiaryContainer.withValues(alpha: 0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.tertiary.withValues(alpha: 0.15)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.tertiary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.cloud_sync, color: AppTheme.tertiary, size: 20),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.tertiary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.cloud_sync, color: AppTheme.tertiary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Supabase Realtime',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.text(context)),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isConnected ? const Color(0xFFE0E0FF) : const Color(0xFFFFDAD6),
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    child: Text(
+                      (isConnected ? 'CONNECTE' : 'DECONNECTE').toUpperCase(),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isConnected ? const Color(0xFF262F89) : AppTheme.error),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Firebase Realtime Database',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
-                ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _fbItem(context, Icons.cloud_done, 'Cloud Sync', isConnected ? 'Actif' : 'Inactif'),
+                  const SizedBox(width: 16),
+                  _fbItem(context, Icons.upload, 'Mode', isSimulation ? 'Simulation' : 'Temps reel'),
+                ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0FF),
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: Text(
-                  fb.connectionStatus.toUpperCase(),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF262F89)),
-                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _fbItem(context, Icons.verified, 'Integrite', isConnected ? '100% Verifie' : '--'),
+                  const SizedBox(width: 16),
+                  _fbItem(context, Icons.storage, 'Source', isSimulation ? 'Jumeau numerique' : 'ESP32'),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _fbItem(Icons.cloud_done, 'Cloud Sync', fb.cloudSync),
-              const SizedBox(width: 16),
-              _fbItem(Icons.upload, 'Last Upload', fb.lastUpload),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _fbItem(Icons.verified, 'Data Integrity', fb.dataIntegrity),
-              const SizedBox(width: 16),
-              _fbItem(Icons.storage, 'Records Today', '${fb.recordsToday}'),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _fbItem(IconData icon, String label, String value) {
+  Widget _fbItem(BuildContext context, IconData icon, String label, String value) {
+    final cs = Theme.of(context).colorScheme;
     return Expanded(
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppTheme.onSurfaceVariant),
+          Icon(icon, size: 14, color: cs.onSurfaceVariant),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.outline)),
-                Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.onSurface), overflow: TextOverflow.ellipsis),
+                Text(label, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurface), overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -672,76 +686,84 @@ class BiogasProductionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bio = BiodigesterModel.mockBiodigester;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'BIOGAS PRODUCTION',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.onPrimaryContainer.withValues(alpha: 0.8),
-              letterSpacing: 1,
-            ),
+    return Consumer<HistoryProvider>(
+      builder: (context, historyProv, _) {
+        final prod = historyProv.production;
+        final volume = prod?.volume ?? 0;
+        final efficiency = prod?.efficiency ?? 0;
+        final energy = prod?.energyGenerated ?? 0;
+        final co2 = prod?.co2Reduction ?? 0;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryContainer,
+            borderRadius: BorderRadius.circular(24),
           ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${bio.todayProduction}',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'm³/day',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.onPrimaryContainer,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _prodStat('Weekly', '${bio.weeklyProduction} m³'),
-              const SizedBox(width: 16),
-              _prodStat('Monthly', '${bio.monthlyProduction} m³'),
-              const SizedBox(width: 16),
-              _prodStat('Yearly', '${bio.yearlyProduction} m³'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(Icons.trending_up, size: 16, color: AppTheme.onPrimaryContainer),
-              const SizedBox(width: 4),
-              Text(
-                '8% increase from last week · Efficiency ${bio.efficiency}%',
+                'PRODUCTION DE BIOGAZ',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.onPrimaryContainer.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.onPrimaryContainer.withValues(alpha: 0.8),
+                  letterSpacing: 1,
                 ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    volume.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'm\u00b3/jour',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.onPrimaryContainer,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _prodStat('Energie', '${energy.toStringAsFixed(1)} kWh'),
+                  const SizedBox(width: 16),
+                  _prodStat('CO2 reduit', '${co2.toStringAsFixed(2)} kg'),
+                  const SizedBox(width: 16),
+                  _prodStat('Efficacite', '${efficiency.toStringAsFixed(1)}%'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.trending_up, size: 16, color: AppTheme.onPrimaryContainer),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${prod?.readingCount ?? 0} mesures - Periode: ${prod?.period ?? '--'}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.onPrimaryContainer.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -762,59 +784,68 @@ class EnergyImpactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bio = BiodigesterModel.mockBiodigester;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Energy & Environmental Impact',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
+    return Consumer<HistoryProvider>(
+      builder: (context, historyProv, _) {
+        final prod = historyProv.production;
+        final energy = prod?.energyGenerated ?? 0;
+        final co2 = prod?.co2Reduction ?? 0;
+        final efficiency = prod?.efficiency ?? 0;
+        final readingCount = prod?.readingCount ?? 0;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
           ),
-          const SizedBox(height: 16),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _impactItem(Icons.bolt, 'Energy Generated', '${bio.energyGenerated} kWh', AppTheme.primary),
-              const SizedBox(width: 12),
-              _impactItem(Icons.eco, 'CO₂ Reduction', '${bio.co2Reduction.toInt()} kg', const Color(0xFF2E7D32)),
+              Text(
+                'Impact energetique & environnemental',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _impactItem(context, Icons.bolt, 'Energie generee', '${energy.toStringAsFixed(1)} kWh', AppTheme.primary),
+                  const SizedBox(width: 12),
+                  _impactItem(context, Icons.eco, 'Reduction CO2', '${co2.toStringAsFixed(2)} kg', const Color(0xFF2E7D32)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _impactItem(context, Icons.percent, 'Efficacite', '${efficiency.toStringAsFixed(1)}%', AppTheme.tertiary),
+                  const SizedBox(width: 12),
+                  _impactItem(context, Icons.storage, 'Mesures', '$readingCount', AppTheme.secondary),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _impactItem(Icons.percent, 'Efficiency', '${bio.efficiency}%', AppTheme.tertiary),
-              const SizedBox(width: 12),
-              _impactItem(Icons.storage, 'Capacity', '${bio.capacity} m³', AppTheme.secondary),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _impactItem(IconData icon, String label, String value, Color color) {
+  Widget _impactItem(BuildContext context, IconData icon, String label, String value, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.outline)),
-            Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.onSurface)),
+            Text(label, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+            Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: cs.onSurface)),
           ],
         ),
       ),

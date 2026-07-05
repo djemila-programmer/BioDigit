@@ -15,37 +15,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<_OnboardingPage> _pages = [
     _OnboardingPage(
-      title: 'Biogas Production',
-      subtitle: 'RENEWABLE ENERGY',
+      title: 'Production de biogaz',
+      subtitle: 'ÉNERGIE RENOUVELABLE',
       description:
-          'Convert livestock waste into clean biogas. Monitor daily production in m³, track efficiency, and reduce CO₂ emissions across your farm.',
+          'Valorisez les déchets organiques et suivez la production journalière, l’efficacité et les gains environnementaux.',
       icon: Icons.eco,
       tagLabel: 'Up to 8.4 m³/day',
       imageColor: AppTheme.primaryContainer,
     ),
     _OnboardingPage(
-      title: 'Real-Time IoT Monitoring',
-      subtitle: 'ESP32 + SENSORS',
+      title: 'Suivi IoT temps réel',
+      subtitle: 'ESP32 + CAPTEURS',
       description:
-          'Track temperature (DS18B20), pressure (BMP280), methane (MQ-4), and slurry level (HC-SR04) with live sync via Firebase.',
+          'Surveillez température, pression, méthane et niveau de substrat avec synchronisation instantanée via Supabase.',
       icon: Icons.sensors,
       tagLabel: '4 Sensors Live',
       imageColor: AppTheme.primary,
     ),
     _OnboardingPage(
-      title: 'AI Anomaly Detection',
-      subtitle: 'PREDICTIVE INTELLIGENCE',
+      title: 'Détection d’anomalies',
+      subtitle: 'ANALYSE PRÉDICTIVE',
       description:
-          'Machine learning detects leaks, pressure spikes, and sensor drift before they become critical — with smart alerts in Français, Mooré, or Dioula.',
+          'Détectez les fuites, les surpressions et les dérives capteurs avant qu’elles n’impactent la production.',
       icon: Icons.notifications_active,
-      tagLabel: 'AI Powered',
+      tagLabel: 'Détection automatique',
       imageColor: AppTheme.tertiary,
     ),
     _OnboardingPage(
-      title: 'Farm Management',
+      title: 'Gestion de ferme',
       subtitle: 'BURKINA FASO',
       description:
-          'Manage feeding schedules, organic waste tracking, livestock, and biodigester performance — all adapted for Plateau Central.',
+          'Organisez les données d’exploitation, les plannings et le suivi des installations dans un cadre adapté au terrain.',
       icon: Icons.agriculture,
       tagLabel: 'Local Context',
       imageColor: AppTheme.secondary,
@@ -65,8 +65,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -90,12 +91,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   TextButton(
                     onPressed: () =>
                         Navigator.pushReplacementNamed(context, AppRoutes.login),
-                    child: const Text(
-                      'Skip',
+                    child: Text(
+                      'Passer',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.onSurfaceVariant,
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -136,35 +137,90 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: index == _currentPage
                               ? AppTheme.primary
-                              : AppTheme.outlineVariant,
+                              : cs.outlineVariant,
                           borderRadius: BorderRadius.circular(9999),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // Next Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 360) {
+                        return Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _nextPage,
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(_currentPage == _pages.length - 1
+                                          ? 'Commencer'
+                                          : 'Suivant'),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.arrow_forward, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: () => Navigator.pushReplacementNamed(
+                                context,
+                                AppRoutes.login,
+                              ),
+                              child: const Text('J’ai déjà un compte'),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
                         children: [
-                          Text(_currentPage == _pages.length - 1
-                              ? 'Get Started'
-                              : 'Next'),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, size: 18),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Navigator.pushReplacementNamed(
+                                context,
+                                AppRoutes.login,
+                              ),
+                              child: const Text('Sign in'),
+                              // button text intentionally concise
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: _nextPage,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(_currentPage == _pages.length - 1
+                                      ? 'Commencer'
+                                      : 'Suivant'),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.arrow_forward, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -255,7 +311,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       fontSize: (w * 0.07).clamp(20.0, 28.0),
                       height: 1.3,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurface,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -263,7 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Text(
                     page.description,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: (w * 0.04).clamp(13.0, 16.0), height: 1.5, letterSpacing: 0.5, color: AppTheme.onSurfaceVariant),
+                    style: TextStyle(fontSize: (w * 0.04).clamp(13.0, 16.0), height: 1.5, letterSpacing: 0.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   SizedBox(height: h * 0.04),
                 ],

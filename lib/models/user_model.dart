@@ -27,31 +27,31 @@ class UserModel {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'fullName': fullName,
+    'full_name': fullName,
     'email': email,
     'phone': phone,
-    'farmName': farmName,
+    'farm_name': farmName,
     'role': role,
-    'profileImageUrl': profileImageUrl,
-    'biodigesterType': biodigesterType,
-    'biodigesterCapacity': biodigesterCapacity,
+    'profile_image_url': profileImageUrl,
+    'biodigester_type': biodigesterType,
+    'biodigester_capacity': biodigesterCapacity,
     'location': location ?? 'Plateau Central, Burkina Faso',
-    'createdAt': createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+    'created_at': createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
     id: json['id'] as String? ?? '',
-    fullName: json['fullName'] as String? ?? '',
+    fullName: (json['full_name'] ?? json['fullName']) as String? ?? '',
     email: json['email'] as String? ?? '',
     phone: json['phone'] as String? ?? '',
-    farmName: json['farmName'] as String? ?? '',
+    farmName: (json['farm_name'] ?? json['farmName']) as String? ?? '',
     role: json['role'] as String? ?? 'user',
-    profileImageUrl: json['profileImageUrl'] as String? ?? '',
-    biodigesterType: json['biodigesterType'] as String?,
-    biodigesterCapacity: (json['biodigesterCapacity'] as num?)?.toDouble(),
+    profileImageUrl: (json['profile_image_url'] ?? json['profileImageUrl']) as String? ?? '',
+    biodigesterType: (json['biodigester_type'] ?? json['biodigesterType']) as String?,
+    biodigesterCapacity: ((json['biodigester_capacity'] ?? json['biodigesterCapacity']) as num?)?.toDouble(),
     location: json['location'] as String?,
-    createdAt: json['createdAt'] != null
-        ? DateTime.tryParse(json['createdAt'] as String)
+    createdAt: (json['created_at'] ?? json['createdAt']) != null
+        ? DateTime.tryParse((json['created_at'] ?? json['createdAt']) as String)
         : null,
   );
 

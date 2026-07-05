@@ -4,7 +4,7 @@ import '../theme/app_theme.dart';
 import '../routes.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/common_widgets.dart';
-import '../models/sensor_model.dart';
+import '../models/user_model.dart';
 import '../services/providers.dart';
 import '../services/sensor_service.dart';
 
@@ -19,17 +19,21 @@ class _MainDashboardState extends State<MainDashboard> {
   @override
   void initState() {
     super.initState();
-    // Start listening to real-time sensor data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SensorProvider>().startListening();
       context.read<AlertProvider>().startListening();
+      context.read<HistoryProvider>().loadProduction('weekly');
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final sensorProv = context.watch<SensorProvider>();
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
@@ -42,20 +46,48 @@ class _MainDashboardState extends State<MainDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Hero Greeting
-            _buildGreetingSection(),
+            _buildGreetingSection(auth.user),
             const SizedBox(height: 32),
 
             // Biodigester Visual
             const BiodigesterVisual(height: 220),
             const SizedBox(height: 32),
 
+            _buildQuickActions(context),
+            const SizedBox(height: 24),
+
             // ESP32 Status Card
             const ESP32StatusCard(),
             const SizedBox(height: 12),
 
-            // Firebase Status Card
-            const FirebaseStatusCard(),
+            // Supabase Status Card
+            const SupabaseStatusCard(),
             const SizedBox(height: 32),
+
+            // Simulation indicator
+            if (sensorProv.isSimulation)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFF57F17).withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.science, size: 16, color: Color(0xFFF57F17)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Mode simulation - Donnees generees par le jumeau numerique',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFFF57F17)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Sensor Grid (real-time from SensorProvider)
             Consumer<SensorProvider>(
@@ -64,8 +96,38 @@ class _MainDashboardState extends State<MainDashboard> {
                 if (reading != null && reading.temperature > 0) {
                   return _buildLiveSensorGrid(reading);
                 }
-                // Fallback to mock data when no live data
-                return _buildSensorGrid();
+                if (sensorProv.isLoading) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sensors_off, size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Aucun capteur connecte',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Connectez votre ESP32 pour voir les donnees en temps reel.',
+                          style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 32),
@@ -88,10 +150,11 @@ class _MainDashboardState extends State<MainDashboard> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return PreferredSize(
       preferredSize: const Size.fromHeight(64),
       child: Container(
-        color: AppTheme.surface.withValues(alpha: 0.8),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -118,8 +181,7 @@ class _MainDashboardState extends State<MainDashboard> {
                 IconButton(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.notifications),
-                  icon: const Icon(Icons.notifications,
-                      color: AppTheme.onSurfaceVariant),
+                  icon: Icon(Icons.notifications, color: cs.onSurfaceVariant),
                 ),
               ],
             ),
@@ -129,59 +191,36 @@ class _MainDashboardState extends State<MainDashboard> {
     );
   }
 
-  Widget _buildGreetingSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'Bienvenue, Ferme Plateau Central !',
-                  style: TextStyle(
-                    fontSize: 28,
-                    height: 36 / 28,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.onSurface,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Your energy system is operating optimally.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
+  Widget _buildGreetingSection(UserModel? user) {
+    final displayName = user?.fullName.trim().isNotEmpty == true
+        ? user!.fullName
+        : 'Ferme Plateau Central';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cs = Theme.of(context).colorScheme;
+        final narrow = constraints.maxWidth < 560;
+        final weather = Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.wb_sunny, color: AppTheme.secondary, size: 28),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Ouagadougou, BF',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.onSurface,
+                      color: cs.onSurface,
                     ),
                   ),
                   Text(
@@ -196,35 +235,170 @@ class _MainDashboardState extends State<MainDashboard> {
               ),
             ],
           ),
-        ),
-      ],
+        );
+
+        if (narrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bienvenue, $displayName',
+                style: TextStyle(
+                  fontSize: 28,
+                  height: 36 / 28,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              weather,
+              const SizedBox(height: 12),
+              Text(
+                'Votre système de biodigesteur est suivi en temps réel.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bienvenue, $displayName',
+                    style: TextStyle(
+                      fontSize: 28,
+                      height: 36 / 28,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Votre système de biodigesteur est suivi en temps réel.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            weather,
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildSensorGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: DashboardMetric.mockMetrics.length,
-      itemBuilder: (context, index) {
-        final m = DashboardMetric.mockMetrics[index];
-        return MetricCard(
-          label: m.label,
-          value: m.value,
-          unit: m.unit,
-          icon: m.icon,
-          iconColor: m.color,
-          status: m.status,
-          progress: m.progress,
-          trend: m.trend,
-          lastUpdate: m.lastUpdate,
-          sensorModel: m.sensorModel,
+  Widget _buildQuickActions(BuildContext context) {
+    final actions = [
+      _QuickAction(Icons.sensors, 'Direct', AppRoutes.liveMonitoring, AppTheme.primary),
+      _QuickAction(Icons.notifications_active, 'Alertes', AppRoutes.alerts, AppTheme.secondary),
+      _QuickAction(Icons.history, 'Historique', AppRoutes.history, AppTheme.tertiary),
+      _QuickAction(Icons.person, 'Profil', AppRoutes.userProfile, const Color(0xFF2E7D32)),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 4 : 2;
+        if (constraints.maxWidth < 420) {
+          return Column(
+            children: actions
+                .map(
+                  (action) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () => Navigator.pushNamed(context, action.route),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: action.color.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(action.icon, color: action.color, size: 22),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                action.label,
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.text(context)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          );
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: actions.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2.4,
+          ),
+          itemBuilder: (context, index) {
+            final cs = Theme.of(context).colorScheme;
+            final action = actions[index];
+            return InkWell(
+              onTap: () => Navigator.pushNamed(context, action.route),
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: action.color.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(action.icon, color: action.color, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        action.label,
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.onSurface),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -274,42 +448,66 @@ class _MainDashboardState extends State<MainDashboard> {
       },
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: metrics.length,
-      itemBuilder: (context, index) {
-        final m = metrics[index];
-        return MetricCard(
-          label: m['label'] as String,
-          value: m['value'] as String,
-          unit: m['unit'] as String,
-          icon: m['icon'] as IconData,
-          iconColor: m['color'] as Color,
-          status: 'LIVE',
-          progress: m['progress'] as double,
-          trend: m['trend'] as String,
-          lastUpdate: 'Now',
-          sensorModel: m['sensor'] as String,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth < 420 ? 1 : 2;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: columns == 1 ? 2.2 : 1.1,
+          ),
+          itemCount: metrics.length,
+          itemBuilder: (context, index) {
+            final m = metrics[index];
+            return MetricCard(
+              label: m['label'] as String,
+              value: m['value'] as String,
+              unit: m['unit'] as String,
+              icon: m['icon'] as IconData,
+              iconColor: m['color'] as Color,
+              status: 'LIVE',
+              progress: m['progress'] as double,
+              trend: m['trend'] as String,
+              lastUpdate: 'Now',
+              sensorModel: m['sensor'] as String,
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildDailyInsight(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final sensorProv = context.watch<SensorProvider>();
+    final reading = sensorProv.latestReading;
+
+    String insight;
+    if (reading != null && reading.temperature > 0) {
+      if (reading.temperature > 40) {
+        insight = 'Attention: Temperature elevee detectee (${reading.temperature.toStringAsFixed(1)}\u00b0C). Verifier le refroidissement.';
+      } else if (reading.temperature < 28) {
+        insight = 'Attention: Temperature basse (${reading.temperature.toStringAsFixed(1)}\u00b0C). Activite microbienne reduite.';
+      } else if (reading.pressure > 1.5) {
+        insight = 'Attention: Pression elevee (${reading.pressure.toStringAsFixed(2)} bar). Verifier la soupape.';
+      } else {
+        insight = 'Systeme operationnel. Temperature: ${reading.temperature.toStringAsFixed(1)}\u00b0C, Pression: ${reading.pressure.toStringAsFixed(2)} bar, Methane: ${reading.methane.toStringAsFixed(0)} ppm.';
+      }
+    } else {
+      insight = 'En attente de donnees capteur pour generer les insights.';
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerHigh,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.5)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,12 +515,12 @@ class _MainDashboardState extends State<MainDashboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Daily Insight',
+              Text(
+                'Insight du jour',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.onSurface,
+                  color: cs.onSurface,
                 ),
               ),
               const Icon(Icons.lightbulb, color: AppTheme.primary),
@@ -330,11 +528,11 @@ class _MainDashboardState extends State<MainDashboard> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Optimization complete. Methane levels are 5% higher due to adjusted agitation schedule. Slurry output quality is optimal.',
+            insight,
             style: TextStyle(
               fontSize: 16,
               height: 24 / 16,
-              color: AppTheme.onSurfaceVariant,
+              color: AppTheme.subtext(context),
             ),
           ),
           const SizedBox(height: 16),
@@ -345,10 +543,19 @@ class _MainDashboardState extends State<MainDashboard> {
               minimumSize: const Size(double.infinity, 48),
               side: const BorderSide(color: AppTheme.primary, width: 2),
             ),
-            child: const Text('View Full Report'),
+            child: const Text('Voir le rapport complet'),
           ),
         ],
       ),
     );
   }
+}
+
+class _QuickAction {
+  final IconData icon;
+  final String label;
+  final String route;
+  final Color color;
+
+  _QuickAction(this.icon, this.label, this.route, this.color);
 }

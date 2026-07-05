@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_nav_bar.dart';
 import '../models/biodigester_model.dart';
 
 class FarmManagement extends StatelessWidget {
@@ -8,9 +9,11 @@ class FarmManagement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: const AppHeader(title: 'Farm Management'),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(
@@ -66,22 +69,22 @@ class FarmManagement extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             // Livestock Inventory
-            Text('Livestock Inventory', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Livestock Inventory', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: _livestockCard(Icons.pets, 'Cattle', '124', '+3 this week', AppTheme.primary),
+                  child: _livestockCard(context, Icons.pets, 'Cattle', '124', '+3 this week', AppTheme.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _livestockCard(Icons.grid_view, 'Swine', '86', '+5 this week', AppTheme.secondary),
+                  child: _livestockCard(context, Icons.grid_view, 'Swine', '86', '+5 this week', AppTheme.secondary),
                 ),
               ],
             ),
             const SizedBox(height: 24),
             // Daily Input
-            Text('Daily Input & Energy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Daily Input & Energy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -90,13 +93,13 @@ class FarmManagement extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       children: [
-                        const Text('Daily Input', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.onSurfaceVariant)),
+                        Text('Daily Input', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: cs.onSurfaceVariant)),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: 80,
@@ -110,23 +113,23 @@ class FarmManagement extends StatelessWidget {
                                 child: CircularProgressIndicator(
                                   value: 0.75,
                                   strokeWidth: 10,
-                                  backgroundColor: AppTheme.surfaceContainerHigh,
+                                  backgroundColor: cs.surfaceContainerHigh,
                                   valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
                                   strokeCap: StrokeCap.round,
                                 ),
                               ),
-                              const Column(
+                              Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('750', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.onSurface)),
-                                  Text('kg', style: TextStyle(fontSize: 10, color: AppTheme.onSurfaceVariant)),
+                                  Text('750', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: cs.onSurface)),
+                                  Text('kg', style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
                                 ],
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text('of 1,000 kg target', style: TextStyle(fontSize: 11, color: AppTheme.onSurfaceVariant)),
+                        Text('of 1,000 kg target', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -136,11 +139,11 @@ class FarmManagement extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      _energyCard(Icons.bolt, 'Biogas Potential', '8.4 m³', AppTheme.primary),
+                      _energyCard(context, Icons.bolt, 'Biogas Potential', '8.4 m³', AppTheme.primary),
                       const SizedBox(height: 12),
-                      _energyCard(Icons.electric_meter, 'Current Usage', '3.2 m³', AppTheme.secondary),
+                      _energyCard(context, Icons.electric_meter, 'Current Usage', '3.2 m³', AppTheme.secondary),
                       const SizedBox(height: 12),
-                      _energyCard(Icons.eco, 'Eco Savings', '\$42.50', AppTheme.tertiary),
+                      _energyCard(context, Icons.eco, 'Eco Savings', '\$42.50', AppTheme.tertiary),
                     ],
                   ),
                 ),
@@ -148,31 +151,31 @@ class FarmManagement extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             // Satellite Map placeholder
-            Text('Farm Map', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Farm Map', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Container(
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppTheme.surfaceContainerHigh,
+                color: cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
               ),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.satellite_alt, size: 40, color: AppTheme.outline.withValues(alpha: 0.4)),
+                    Icon(Icons.satellite_alt, size: 40, color: cs.outlineVariant.withValues(alpha: 0.4)),
                     const SizedBox(height: 8),
-                    Text('Satellite View', style: TextStyle(fontSize: 14, color: AppTheme.outline)),
-                    Text('Tap to expand', style: TextStyle(fontSize: 12, color: AppTheme.outline.withValues(alpha: 0.6))),
+                    Text('Satellite View', style: TextStyle(fontSize: 14, color: cs.outlineVariant)),
+                    Text('Tap to expand', style: TextStyle(fontSize: 12, color: cs.outlineVariant.withValues(alpha: 0.6))),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
             // Quick Actions
-            Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -183,18 +186,39 @@ class FarmManagement extends StatelessWidget {
                 _actionButton(Icons.bar_chart, 'View Reports', AppTheme.tertiary),
               ],
             ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Farm Notes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.onSurface)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Consignez les changements d’alimentation, de production et de maintenance pour garder un historique d’exploitation exploitable.',
+                    style: TextStyle(fontSize: 13, height: 1.5, color: cs.onSurfaceVariant.withValues(alpha: 0.95)),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Biodigester Feeding Schedule
-            Text('Biodigester Feeding Schedule', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Biodigester Feeding Schedule', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             ...FeedingSchedule.mockSchedule.map((schedule) => Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
@@ -204,12 +228,12 @@ class FarmManagement extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: schedule.status == 'completed' ? const Color(0xFFE8F5E9) :
                               schedule.status == 'in_progress' ? const Color(0xFFFFF8E1) :
-                              AppTheme.surfaceContainerHigh,
+                              cs.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       children: [
-                        Text(schedule.time, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: schedule.status == 'completed' ? const Color(0xFF1B5E20) : AppTheme.onSurface)),
+                        Text(schedule.time, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: schedule.status == 'completed' ? const Color(0xFF1B5E20) : cs.onSurface)),
                       ],
                     ),
                   ),
@@ -218,8 +242,8 @@ class FarmManagement extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(schedule.type, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
-                        Text('${schedule.amount} kg', style: const TextStyle(fontSize: 11, color: AppTheme.onSurfaceVariant)),
+                        Text(schedule.type, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: cs.onSurface)),
+                        Text('${schedule.amount} kg', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -228,7 +252,7 @@ class FarmManagement extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: schedule.status == 'completed' ? const Color(0xFFE8F5E9) :
                               schedule.status == 'in_progress' ? const Color(0xFFFFF8E1) :
-                              AppTheme.surfaceContainerHigh,
+                              cs.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
@@ -238,7 +262,7 @@ class FarmManagement extends StatelessWidget {
                         fontSize: 9, fontWeight: FontWeight.bold,
                         color: schedule.status == 'completed' ? const Color(0xFF1B5E20) :
                                schedule.status == 'in_progress' ? const Color(0xFFF57F17) :
-                               AppTheme.outline,
+                               cs.outlineVariant,
                       ),
                     ),
                   ),
@@ -248,35 +272,35 @@ class FarmManagement extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Organic Waste Tracking
-            Text('Organic Waste Tracking', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
+            Text('Organic Waste Tracking', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _wasteRow('Bouse de vache', '450 kg', '60%', AppTheme.primary),
+                  _wasteRow(context, 'Bouse de vache', '450 kg', '60%', AppTheme.primary),
                   const SizedBox(height: 12),
-                  _wasteRow('Lisier de porc', '200 kg', '27%', AppTheme.secondary),
+                  _wasteRow(context, 'Lisier de porc', '200 kg', '27%', AppTheme.secondary),
                   const SizedBox(height: 12),
-                  _wasteRow('Déchets organiques', '100 kg', '13%', AppTheme.tertiary),
+                  _wasteRow(context, 'Déchets organiques', '100 kg', '13%', AppTheme.tertiary),
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceContainerLow,
+                      color: cs.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Daily Input', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
+                        Text('Total Daily Input', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: cs.onSurface)),
                         Text('750 kg / 1,000 kg', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary)),
                       ],
                     ),
@@ -301,13 +325,14 @@ class FarmManagement extends StatelessWidget {
     );
   }
 
-  Widget _livestockCard(IconData icon, String title, String count, String change, Color color) {
+  Widget _livestockCard(BuildContext context, IconData icon, String title, String count, String change, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,20 +353,21 @@ class FarmManagement extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(title, style: const TextStyle(fontSize: 13, color: AppTheme.onSurfaceVariant)),
-          Text(count, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.onSurface)),
+          Text(title, style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
+          Text(count, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: cs.onSurface)),
         ],
       ),
     );
   }
 
-  Widget _energyCard(IconData icon, String label, String value, Color color) {
+  Widget _energyCard(BuildContext context, IconData icon, String label, String value, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -355,8 +381,8 @@ class FarmManagement extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.onSurfaceVariant)),
-                Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.onSurface)),
+                Text(label, style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+                Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: cs.onSurface)),
               ],
             ),
           ),
@@ -384,14 +410,15 @@ class FarmManagement extends StatelessWidget {
     );
   }
 
-  Widget _wasteRow(String type, String amount, String percent, Color color) {
+  Widget _wasteRow(BuildContext context, String type, String amount, String percent, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(type, style: const TextStyle(fontSize: 12, color: AppTheme.onSurface)),
+            Text(type, style: TextStyle(fontSize: 12, color: cs.onSurface)),
             Text('$amount ($percent)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
@@ -401,7 +428,7 @@ class FarmManagement extends StatelessWidget {
           child: LinearProgressIndicator(
             value: double.parse(percent.replaceAll('%', '')) / 100,
             minHeight: 4,
-            backgroundColor: AppTheme.surfaceContainer,
+            backgroundColor: cs.surfaceContainerHigh,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),

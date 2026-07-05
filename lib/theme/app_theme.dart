@@ -70,6 +70,58 @@ class AppTheme {
   static const double radius2xl = 16.0;
   static const double radius3xl = 24.0;
 
+  // ─── Dark Mode Colors ──────────────────────────────────────────────────
+
+  static const Color _darkBg = Color(0xFF0D1B0F);
+  static const Color _darkSurface = Color(0xFF14231A);
+  static const Color _darkCard = Color(0xFF1A2E20);
+  static const Color _darkCardHigh = Color(0xFF243828);
+  static const Color _darkOnSurface = Color(0xFFE8EDE8);
+  static const Color _darkOnSurfaceVariant = Color(0xFF9CAE9C);
+  static const Color _darkOutline = Color(0xFF2D4A33);
+  static const Color _darkOutlineVariant = Color(0xFF1F3524);
+  static const Color _darkWhite = Color(0xFFFFFFFF);
+
+  /// Get theme-aware background color (adapts to light/dark)
+  static Color bg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkBg : background;
+
+  /// Get theme-aware surface color
+  static Color surfaceColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkSurface : surface;
+
+  /// Get theme-aware card color
+  static Color card(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkCard : _darkWhite;
+
+  /// Get theme-aware elevated card color
+  static Color cardHigh(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkCardHigh : surfaceContainerHigh;
+
+  /// Get theme-aware primary text color
+  static Color text(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkOnSurface : onSurface;
+
+  /// Get theme-aware secondary text color
+  static Color subtext(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkOnSurfaceVariant : onSurfaceVariant;
+
+  /// Get theme-aware border color
+  static Color border(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkOutlineVariant : outlineVariant.withValues(alpha: 0.2);
+
+  /// Get theme-aware strong border color
+  static Color borderStrong(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkOutline : outlineVariant;
+
+  /// Check if dark mode is active
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  /// Get white in light mode, light text in dark mode
+  static Color white(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _darkOnSurface : _darkWhite;
+
   // Typography
   static TextTheme get textTheme => TextTheme(
         displayLarge: GoogleFonts.inter(
@@ -187,7 +239,7 @@ class AppTheme {
             ),
             textStyle: GoogleFonts.inter(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
             ),
           ),
@@ -198,22 +250,23 @@ class AppTheme {
             side: const BorderSide(color: outlineVariant),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(9999),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
-          filled: false,
+          filled: true,
+          fillColor: surfaceContainerLowest,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radiusLg),
-            borderSide: const BorderSide(color: outline, width: 1.5),
+            borderRadius: BorderRadius.circular(radiusXl),
+            borderSide: const BorderSide(color: outlineVariant, width: 1.2),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radiusLg),
-            borderSide: const BorderSide(color: outline, width: 1.5),
+            borderRadius: BorderRadius.circular(radiusXl),
+            borderSide: const BorderSide(color: outlineVariant, width: 1.2),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radiusLg),
+            borderRadius: BorderRadius.circular(radiusXl),
             borderSide: const BorderSide(color: primary, width: 1.5),
           ),
           contentPadding:
@@ -228,7 +281,123 @@ class AppTheme {
           color: surfaceContainerLowest,
           elevation: 0,
           shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radius2xl),
+          ),
+          clipBehavior: Clip.antiAlias,
+        ),
+      );
+
+  // ─── Dark Theme ──────────────────────────────────────────────────────────
+
+  static ColorScheme get _darkColorScheme => ColorScheme(
+        brightness: Brightness.dark,
+        primary: primaryFixed,
+        onPrimary: onPrimaryFixed,
+        primaryContainer: primaryContainer,
+        onPrimaryContainer: onPrimaryContainer,
+        secondary: secondaryFixed,
+        onSecondary: onSecondaryFixed,
+        secondaryContainer: secondaryContainer,
+        onSecondaryContainer: onSecondaryContainer,
+        tertiary: tertiaryFixed,
+        onTertiary: onTertiaryFixed,
+        tertiaryContainer: tertiaryContainer,
+        onTertiaryContainer: onTertiaryContainer,
+        error: error,
+        onError: onError,
+        errorContainer: errorContainer,
+        onErrorContainer: onErrorContainer,
+        surface: _darkSurface,
+        onSurface: _darkOnSurface,
+        onSurfaceVariant: _darkOnSurfaceVariant,
+        outline: _darkOutline,
+        outlineVariant: _darkOutlineVariant,
+        inverseSurface: const Color(0xFFE8EDE8),
+        onInverseSurface: const Color(0xFF0D1B0F),
+        inversePrimary: primary,
+        surfaceContainerLowest: _darkBg,
+        surfaceContainerLow: _darkSurface,
+        surfaceContainer: _darkCard,
+        surfaceContainerHigh: _darkCardHigh,
+        surfaceContainerHighest: _darkCardHigh,
+      );
+
+  static ThemeData get darkTheme => ThemeData(
+        useMaterial3: true,
+        colorScheme: _darkColorScheme,
+        textTheme: textTheme,
+        scaffoldBackgroundColor: _darkBg,
+        appBarTheme: AppBarTheme(
+          backgroundColor: _darkSurface,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: GoogleFonts.inter(
+            fontSize: 22,
+            fontWeight: FontWeight.w500,
+            color: primaryFixed,
+          ),
+          iconTheme: const IconThemeData(color: Color(0xFFE8EDE8)),
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: _darkSurface,
+          selectedItemColor: primaryFixed,
+          unselectedItemColor: const Color(0xFF9CAE9C),
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryFixed,
+            foregroundColor: onPrimaryFixed,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9999),
+            ),
+            textStyle: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primaryFixed,
+            side: const BorderSide(color: Color(0xFF2D4A33)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: _darkCard,
+          border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radiusXl),
+            borderSide: const BorderSide(color: Color(0xFF2D4A33), width: 1.2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(radiusXl),
+            borderSide: const BorderSide(color: Color(0xFF2D4A33), width: 1.2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(radiusXl),
+            borderSide: const BorderSide(color: primaryFixed, width: 1.5),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF9CAE9C),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        cardTheme: CardThemeData(
+          color: _darkCard,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radius2xl),
           ),
           clipBehavior: Clip.antiAlias,
         ),

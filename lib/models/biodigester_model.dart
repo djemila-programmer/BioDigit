@@ -78,8 +78,8 @@ class ESP32Status {
   );
 }
 
-/// Firebase connection status model.
-class FirebaseStatus {
+/// Supabase connection status model.
+class SupabaseStatus {
   final String connectionStatus;
   final String cloudSync;
   final String lastUpload;
@@ -87,7 +87,7 @@ class FirebaseStatus {
   final int recordsToday;
   final double databaseSize;
 
-  const FirebaseStatus({
+  const SupabaseStatus({
     required this.connectionStatus,
     required this.cloudSync,
     required this.lastUpload,
@@ -96,7 +96,7 @@ class FirebaseStatus {
     required this.databaseSize,
   });
 
-  static const FirebaseStatus mockStatus = FirebaseStatus(
+  static const SupabaseStatus mockStatus = SupabaseStatus(
     connectionStatus: 'Connected',
     cloudSync: 'Active',
     lastUpload: '30 seconds ago',

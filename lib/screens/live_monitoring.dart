@@ -26,8 +26,11 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
 
   @override
   Widget build(BuildContext context) {
+    final sensorProv = context.watch<SensorProvider>();
+
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
@@ -40,22 +43,22 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Connection Status Bar
-            _buildConnectionBar(),
+            _buildConnectionBar(sensorProv),
             const SizedBox(height: 12),
 
-            // Firebase Status
-            const FirebaseStatusCard(),
+            // Supabase Status
+            const SupabaseStatusCard(),
             const SizedBox(height: 24),
 
             // Live Feed Section
-            _buildLiveFeed(),
+            _buildLiveFeed(sensorProv),
             const SizedBox(height: 24),
 
             // Gauges Grid
             _buildGaugesGrid(),
             const SizedBox(height: 32),
 
-            // Predictive Maintenance
+            // Maintenance préventive
             _buildPredictiveMaintenance(),
             const SizedBox(height: 32),
 
@@ -99,8 +102,8 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                 IconButton(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.notifications),
-                  icon: const Icon(Icons.notifications,
-                      color: AppTheme.onSurfaceVariant),
+                  icon: Icon(Icons.notifications,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -110,80 +113,84 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
     );
   }
 
-  Widget _buildConnectionBar() {
+  Widget _buildConnectionBar(SensorProvider sensorProv) {
+    final isOnline = sensorProv.isOnline;
+    final isLoading = sensorProv.isLoading;
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLow,
+        color: isOnline ? cs.surfaceContainerLow : cs.errorContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(12),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            const Icon(Icons.memory, color: AppTheme.primary, size: 18),
+            Icon(Icons.memory, color: isOnline ? AppTheme.primary : AppTheme.error, size: 18),
             const SizedBox(width: 8),
             Text(
               'ESP32: ',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.onSurface,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            const Text(
-              'Connected',
+            Text(
+              isOnline ? 'Connected' : 'Offline',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryContainer,
+                color: isOnline ? AppTheme.primaryContainer : AppTheme.error,
               ),
             ),
             const SizedBox(width: 16),
-            Container(width: 1, height: 16, color: AppTheme.outlineVariant),
+            Container(width: 1, height: 16, color: cs.outlineVariant),
             const SizedBox(width: 16),
-            const Icon(Icons.signal_cellular_alt,
-                color: AppTheme.primary, size: 18),
+            Icon(Icons.signal_cellular_alt,
+                color: isOnline ? AppTheme.primary : AppTheme.error, size: 18),
             const SizedBox(width: 8),
-            const Text(
-              'Signal: Excellent',
+            Text(
+              isOnline ? 'Signal: Excellent' : 'Signal: Lost',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.onSurface,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryContainer.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(9999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.battery_5_bar,
-                    color: AppTheme.primary, size: 18),
-                const SizedBox(width: 4),
-                Text(
-                  '92%',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.primary,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryContainer.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(9999),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.battery_5_bar,
+                      color: AppTheme.primary, size: 18),
+                  const SizedBox(width: 4),
+                  Text(
+                    isLoading ? 'Sync...' : '92%',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.primary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
       ),
     );
   }
 
-  Widget _buildLiveFeed() {
+  Widget _buildLiveFeed(SensorProvider sensorProv) {
     return Container(
       width: double.infinity,
       height: 180,
@@ -194,11 +201,13 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
       child: Stack(
         children: [
           Center(
-            child: Icon(
-              Icons.videocam,
-              size: 80,
-              color: AppTheme.primary.withValues(alpha: 0.3),
-            ),
+            child: sensorProv.isLoading
+                ? const CircularProgressIndicator()
+                : Icon(
+                    Icons.videocam,
+                    size: 80,
+                    color: AppTheme.primary.withValues(alpha: 0.3),
+                  ),
           ),
           Positioned(
             top: 16,
@@ -250,7 +259,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                   ),
                 ),
                 Text(
-                  'Active since 04:30 AM',
+                  sensorProv.latestReading == null ? 'Awaiting live feed...' : 'Active since 04:30 AM',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white.withValues(alpha: 0.8),
@@ -266,36 +275,83 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
   }
 
   Widget _buildGaugesGrid() {
-    final gauges = [
-      _GaugeData('Temperature', '38.5', '°C', AppTheme.primary, Icons.thermostat, 0.50, 'DS18B20', 'rising', '30s ago'),
-      _GaugeData('Pressure', '1.2', 'BAR', AppTheme.tertiary, Icons.speed, 0.36, 'BMP280', 'stable', '1 min ago'),
-      _GaugeData('Methane', '64', '% CH₄', AppTheme.primaryContainer, Icons.gas_meter, 0.72, 'MQ-4', 'rising', '45s ago'),
-      _GaugeData('Filling Level', '82', '% Full', AppTheme.secondary, Icons.inventory_2, 0.82, 'HC-SR04', 'falling', '2 min ago'),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.9,
-      ),
-      itemCount: gauges.length,
-      itemBuilder: (context, index) {
-        return _buildGaugeCard(gauges[index]);
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProv, _) {
+        final reading = sensorProv.latestReading;
+        final gauges = [
+          _GaugeData(
+            'Temperature',
+            reading != null ? reading.temperature.toStringAsFixed(1) : '--',
+            '\u00b0C',
+            AppTheme.primary,
+            Icons.thermostat,
+            reading != null ? ((reading.temperature - 25) / 15).clamp(0.0, 1.0) : 0.0,
+            'DS18B20',
+            reading?.temperatureTrend ?? 'stable',
+            reading != null ? 'Now' : '--',
+          ),
+          _GaugeData(
+            'Pressure',
+            reading != null ? reading.pressure.toStringAsFixed(2) : '--',
+            'BAR',
+            AppTheme.tertiary,
+            Icons.speed,
+            reading != null ? ((reading.pressure - 0.8) / 0.7).clamp(0.0, 1.0) : 0.0,
+            'BMP280',
+            reading?.pressureTrend ?? 'stable',
+            reading != null ? 'Now' : '--',
+          ),
+          _GaugeData(
+            'Methane',
+            reading != null ? reading.methane.toStringAsFixed(0) : '--',
+            'ppm',
+            AppTheme.primaryContainer,
+            Icons.gas_meter,
+            reading != null ? ((reading.methane - 150) / 350).clamp(0.0, 1.0) : 0.0,
+            'MQ-4',
+            reading?.methaneTrend ?? 'stable',
+            reading != null ? 'Now' : '--',
+          ),
+          _GaugeData(
+            'Niveau',
+            reading != null ? reading.slurryLevel.toStringAsFixed(1) : '--',
+            '%',
+            AppTheme.secondary,
+            Icons.inventory_2,
+            reading != null ? (reading.slurryLevel / 100).clamp(0.0, 1.0) : 0.0,
+            'HC-SR04',
+            reading?.slurryTrend ?? 'stable',
+            reading != null ? 'Now' : '--',
+          ),
+        ];
+  
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.9,
+          ),
+          itemCount: gauges.length,
+          itemBuilder: (context, index) {
+            return _buildGaugeCard(gauges[index]);
+          },
+        );
       },
     );
   }
 
   Widget _buildGaugeCard(_GaugeData data) {
-    return Container(
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -304,12 +360,12 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerHigh,
+              color: cs.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               data.sensorModel,
-              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppTheme.outline, letterSpacing: 0.5),
+              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cs.outlineVariant, letterSpacing: 0.5),
             ),
           ),
           const SizedBox(height: 8),
@@ -325,6 +381,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                     progress: data.progress,
                     color: data.color,
                     strokeWidth: 7,
+                    bgColor: cs.surfaceContainerHigh,
                   ),
                 ),
                 Column(
@@ -342,7 +399,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                       data.unit,
                       style: TextStyle(
                         fontSize: 10,
-                        color: AppTheme.onSurfaceVariant,
+                        color: cs.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -359,10 +416,10 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
               const SizedBox(width: 4),
               Text(
                 data.label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                   letterSpacing: 0.1,
                 ),
               ),
@@ -376,33 +433,36 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
               const SizedBox(width: 4),
               Text(
                 data.lastUpdate,
-                style: const TextStyle(fontSize: 9, color: AppTheme.outline),
+                style: TextStyle(fontSize: 9, color: cs.outlineVariant),
               ),
             ],
           ),
         ],
       ),
-    );
+    );});
   }
 
   Widget _buildPredictiveMaintenance() {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Predictive Maintenance',
+            Text(
+              'Maintenance préventive',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.onSurface,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             TextButton(
-              onPressed: () {},
-              child: const Text('View All'),
+              onPressed: () {
+                // TODO: Navigate to full maintenance list when available
+              },
+              child: const Text('Voir tout'),
             ),
           ],
         ),
@@ -411,9 +471,9 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,22 +493,22 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                   children: [
                     Text(
                       item.title,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface),
                     ),
                     Text(
                       item.description,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.onSurfaceVariant),
+                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 10, color: AppTheme.outline),
+                        Icon(Icons.calendar_today, size: 10, color: cs.outlineVariant),
                         const SizedBox(width: 4),
                         Text(
                           'Due: ${item.dueDate}',
-                          style: const TextStyle(fontSize: 10, color: AppTheme.outline),
+                          style: TextStyle(fontSize: 10, color: cs.outlineVariant),
                         ),
                         const SizedBox(width: 12),
                         Container(
@@ -475,12 +535,48 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
   }
 
   Widget _buildSensorHealth() {
-    final sensors = [
-      {'name': 'DS18B20 Temperature Sensor', 'status': 'Normal', 'detail': 'Operational · Vcc: 5.01V · Updated 30s ago', 'icon': Icons.check_circle, 'color': AppTheme.primary},
-      {'name': 'MQ-4 Methane Sensor', 'status': 'Normal', 'detail': 'Calibrated · Vcc: 4.98V · Updated 45s ago', 'icon': Icons.check_circle, 'color': AppTheme.primary},
-      {'name': 'BMP280 Pressure Sensor', 'status': 'Stable', 'detail': 'Minor noise · Vcc: 3.31V · Updated 1m ago', 'icon': Icons.info, 'color': AppTheme.secondary},
-      {'name': 'HC-SR04 Ultrasonic Sensor', 'status': 'Low Battery', 'detail': 'Battery 12% · Replace soon · Updated 2m ago', 'icon': Icons.warning, 'color': AppTheme.error},
-    ];
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProv, _) {
+        final cs = Theme.of(context).colorScheme;
+        final reading = sensorProv.latestReading;
+        final sensors = [
+          {
+            'name': 'DS18B20 Temperature Sensor',
+            'status': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? 'Normal' : 'Attention',
+            'detail': reading != null
+                ? '${reading.temperature.toStringAsFixed(1)}\u00b0C - Mis a jour maintenant'
+                : 'En attente de donnees...',
+            'icon': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? Icons.check_circle : Icons.warning,
+            'color': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? AppTheme.primary : AppTheme.error,
+          },
+          {
+            'name': 'MQ-4 Methane Sensor',
+            'status': reading != null && reading.methane >= 150 && reading.methane <= 500 ? 'Normal' : 'Attention',
+            'detail': reading != null
+                ? '${reading.methane.toStringAsFixed(0)} ppm - Mis a jour maintenant'
+                : 'En attente de donnees...',
+            'icon': reading != null && reading.methane >= 150 && reading.methane <= 500 ? Icons.check_circle : Icons.warning,
+            'color': reading != null && reading.methane >= 150 && reading.methane <= 500 ? AppTheme.primary : AppTheme.error,
+          },
+          {
+            'name': 'BMP280 Pressure Sensor',
+            'status': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? 'Normal' : 'Attention',
+            'detail': reading != null
+                ? '${reading.pressure.toStringAsFixed(2)} bar - Mis a jour maintenant'
+                : 'En attente de donnees...',
+            'icon': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? Icons.check_circle : Icons.info,
+            'color': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? AppTheme.primary : AppTheme.secondary,
+          },
+          {
+            'name': 'HC-SR04 Ultrasonic Sensor',
+            'status': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? 'Normal' : 'Attention',
+            'detail': reading != null
+                ? '${reading.slurryLevel.toStringAsFixed(1)}% - Mis a jour maintenant'
+                : 'En attente de donnees...',
+            'icon': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? Icons.check_circle : Icons.warning,
+            'color': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? AppTheme.primary : AppTheme.error,
+          },
+        ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,19 +584,19 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Sensor Health',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.onSurface,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             Text(
-              'Updated 2m ago',
+              'Mis a jour maintenant',
               style: TextStyle(
                 fontSize: 11,
-                color: AppTheme.onSurfaceVariant,
+                color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -512,7 +608,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainer,
+              color: cs.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -534,17 +630,17 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                     children: [
                       Text(
                         sensor['name'] as String,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.onSurface,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         sensor['detail'] as String,
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -575,6 +671,8 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
         }),
       ],
     );
+    },
+    );
   }
 }
 
@@ -596,11 +694,13 @@ class _CircularProgressPainter extends CustomPainter {
   final double progress;
   final Color color;
   final double strokeWidth;
+  final Color bgColor;
 
   _CircularProgressPainter({
     required this.progress,
     required this.color,
     required this.strokeWidth,
+    required this.bgColor,
   });
 
   @override
@@ -610,7 +710,7 @@ class _CircularProgressPainter extends CustomPainter {
 
     // Background circle
     final bgPaint = Paint()
-      ..color = AppTheme.surfaceContainerHigh
+      ..color = bgColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;

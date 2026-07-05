@@ -1,76 +1,60 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../main.dart';
+import '../supabase.dart';
 import 'sensor_service.dart';
 
 /// Historical data service: automatic logging and chart data retrieval.
 class HistoryService {
-  FirebaseFirestore? _firestore;
-  FirebaseAuth? _auth;
-
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
-
-  FirebaseAuth? get _authInst {
-    if (!firebaseReady) return null;
-    _auth ??= FirebaseAuth.instance;
-    return _auth;
-  }
-
-  String? get _uid => _authInst?.currentUser?.uid ?? (firebaseReady ? null : 'demo-user');
+  String? get _uid => supabase.auth.currentUser?.id;
 
   // ─── Automatic Data Logging ─────────────────────────────────────────────
 
   Future<void> logReading(SensorReading reading) async {
-    if (_uid == null || _fs == null) return;
-    await _fs!.collection('history').doc(_uid).collection('readings').add({
-      'temperature': reading.temperature, 'pressure': reading.pressure,
-      'methane': reading.methane, 'slurryLevel': reading.slurryLevel,
-      'timestamp': FieldValue.serverTimestamp(),
+    if (_uid == null) return;
+    await supabase.from('history_readings').insert({
+      'user_id': _uid,
+      'temperature': reading.temperature,
+      'pressure': reading.pressure,
+      'methane': reading.methane,
+      'slurry_level': reading.slurryLevel,
     });
   }
 
   // ─── Chart Data Retrieval ───────────────────────────────────────────────
 
   Future<List<HistoryPoint>> getLast24Hours() async {
-    if (_fs == null) return _demoData(24, const Duration(hours: 1));
+    if (_uid == null) return _demoData(24, const Duration(hours: 1));
     return _getReadingsSince(DateTime.now().subtract(const Duration(hours: 24)));
   }
 
   Future<List<HistoryPoint>> getLast7Days() async {
-    if (_fs == null) return _demoData(7, const Duration(days: 1));
+    if (_uid == null) return _demoData(7, const Duration(days: 1));
     return _getReadingsSince(DateTime.now().subtract(const Duration(days: 7)));
   }
 
   Future<List<HistoryPoint>> getLast30Days() async {
-    if (_fs == null) return _demoData(30, const Duration(days: 1));
+    if (_uid == null) return _demoData(30, const Duration(days: 1));
     return _getReadingsSince(DateTime.now().subtract(const Duration(days: 30)));
   }
 
   Future<List<HistoryPoint>> getLast12Months() async {
-    if (_fs == null) return _demoData(12, const Duration(days: 30));
+    if (_uid == null) return _demoData(12, const Duration(days: 30));
     return _getReadingsSince(DateTime.now().subtract(const Duration(days: 365)));
   }
 
   Future<List<HistoryPoint>> _getReadingsSince(DateTime since) async {
-    if (_uid == null || _fs == null) return [];
-    final snapshot = await _fs!.collection('history').doc(_uid).collection('readings')
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(since))
-        .orderBy('timestamp').get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      DateTime ts = DateTime.now();
-      final rawTs = data['timestamp'];
-      if (rawTs is Timestamp) ts = rawTs.toDate();
+    if (_uid == null) return [];
+    final response = await supabase
+        .from('history_readings')
+        .select()
+        .eq('user_id', _uid!)
+        .gte('created_at', since.toIso8601String())
+        .order('created_at');
+    return response.map((row) {
       return HistoryPoint(
-        timestamp: ts,
-        temperature: (data['temperature'] as num?)?.toDouble() ?? 0,
-        pressure: (data['pressure'] as num?)?.toDouble() ?? 0,
-        methane: (data['methane'] as num?)?.toDouble() ?? 0,
-        slurryLevel: (data['slurryLevel'] as num?)?.toDouble() ?? 0,
+        timestamp: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
+        temperature: (row['temperature'] as num?)?.toDouble() ?? 0,
+        pressure: (row['pressure'] as num?)?.toDouble() ?? 0,
+        methane: (row['methane'] as num?)?.toDouble() ?? 0,
+        slurryLevel: (row['slurry_level'] as num?)?.toDouble() ?? 0,
       );
     }).toList();
   }
@@ -78,7 +62,7 @@ class HistoryService {
   // ─── Production Aggregation ─────────────────────────────────────────────
 
   Future<ProductionSummary> getProductionSummary(String period) async {
-    if (_fs == null || _uid == null) {
+    if (_uid == null) {
       return ProductionSummary(
         volume: 87.5, efficiency: 78.2, energyGenerated: 525.0,
         co2Reduction: 2.19, readingCount: 168, period: period,
@@ -92,12 +76,15 @@ class HistoryService {
       case 'annual': since = DateTime.now().subtract(const Duration(days: 365)); break;
       default: since = DateTime.now().subtract(const Duration(days: 7));
     }
-    final snapshot = await _fs!.collection('history').doc(_uid).collection('readings')
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(since)).get();
-    if (snapshot.docs.isEmpty) return ProductionSummary.empty();
+    final response = await supabase
+        .from('history_readings')
+        .select()
+        .eq('user_id', _uid!)
+        .gte('created_at', since.toIso8601String());
+    if (response.isEmpty) return ProductionSummary.empty();
     double totalMethane = 0, avgTemp = 0;
-    int count = snapshot.docs.length;
-    for (final doc in snapshot.docs) {
+    int count = response.length;
+    for (final doc in response) {
       totalMethane += (doc['methane'] as num?)?.toDouble() ?? 0;
       avgTemp += (doc['temperature'] as num?)?.toDouble() ?? 0;
     }
@@ -151,10 +138,10 @@ class HistoryPoint {
 }
 
 class ProductionSummary {
-  final double volume; // m³
-  final double efficiency; // %
-  final double energyGenerated; // kWh
-  final double co2Reduction; // tons
+  final double volume;
+  final double efficiency;
+  final double energyGenerated;
+  final double co2Reduction;
   final int readingCount;
   final String period;
 
@@ -168,7 +155,7 @@ class ProductionSummary {
   });
 
   factory ProductionSummary.empty() => const ProductionSummary(
-    volume: 0, efficiency: 0, energyGenerated: 0,
-    co2Reduction: 0, readingCount: 0, period: 'daily',
-  );
+        volume: 0, efficiency: 0, energyGenerated: 0,
+        co2Reduction: 0, readingCount: 0, period: 'daily',
+      );
 }

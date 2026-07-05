@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../routes.dart';
 import '../services/providers.dart';
 import '../services/alert_service.dart';
 
@@ -35,15 +36,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
         ? allActive
         : allActive.where((a) => a.severity == _filter).toList();
 
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: const AppHeader(title: 'Alert Management'),
       bottomNavigationBar: const BottomNavBar(currentIndex: 2),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.containerPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: RefreshIndicator(
+        onRefresh: _refreshAlerts,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppTheme.containerPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Hero card - Critical issues
             Container(
               width: double.infinity,
@@ -115,26 +120,25 @@ class _AlertsScreenState extends State<AlertsScreen> {
             const SizedBox(height: 24),
 
             // Filter chips
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _filterChip(
                   'All (${allActive.length})',
                   _filter == 'all',
                   () => setState(() => _filter = 'all'),
                 ),
-                const SizedBox(width: 8),
                 _filterChip(
                   'Critical (${counts['critical'] ?? 0})',
                   _filter == 'critical',
                   () => setState(() => _filter = 'critical'),
                 ),
-                const SizedBox(width: 8),
                 _filterChip(
                   'Warning (${counts['warning'] ?? 0})',
                   _filter == 'warning',
                   () => setState(() => _filter = 'warning'),
                 ),
-                const SizedBox(width: 8),
                 _filterChip(
                   'Info (${counts['info'] ?? 0})',
                   _filter == 'info',
@@ -149,7 +153,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.onSurface,
+                color: cs.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -162,11 +166,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 ),
               )
             else if (filtered.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
                   'No active alerts for this filter.',
-                  style: TextStyle(color: AppTheme.onSurfaceVariant),
+                  style: TextStyle(color: cs.onSurfaceVariant),
                 ),
               )
             else
@@ -180,7 +184,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.onSurface,
+                color: cs.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -188,10 +192,10 @@ class _AlertsScreenState extends State<AlertsScreen> {
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppTheme.surfaceContainerHigh,
+                color: cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.outlineVariant.withValues(alpha: 0.3),
+                  color: cs.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
               child: Stack(
@@ -234,10 +238,16 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 ],
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _refreshAlerts() async {
+    context.read<AlertProvider>().startListening();
+    await Future<void>.delayed(const Duration(milliseconds: 250));
   }
 
   Widget _statPill(String label, IconData icon) {
@@ -280,7 +290,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
       decoration: BoxDecoration(
         color: selected
             ? AppTheme.primary
-            : AppTheme.surfaceContainerHighest,
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(9999),
       ),
       child: Text(
@@ -290,7 +300,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           fontWeight: FontWeight.w500,
           color: selected
               ? AppTheme.onPrimary
-              : AppTheme.onSurfaceVariant,
+              : Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     ),
@@ -332,11 +342,12 @@ class _AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border(left: BorderSide(color: alert.severityColor, width: 4)),
         boxShadow: [
@@ -367,18 +378,18 @@ class _AlertCard extends StatelessWidget {
                   children: [
                     Text(
                       alert.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.onSurface,
+                        color: cs.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${alert.timeAgo} · ${alert.sensorId}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.onSurfaceVariant,
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -405,9 +416,9 @@ class _AlertCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             alert.description,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: AppTheme.onSurfaceVariant,
+              color: cs.onSurfaceVariant,
               height: 1.5,
             ),
           ),
@@ -417,19 +428,22 @@ class _AlertCard extends StatelessWidget {
               Icon(
                 Icons.location_on_outlined,
                 size: 14,
-                color: AppTheme.onSurfaceVariant,
+                color: cs.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Text(
                 alert.location,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.onSurfaceVariant,
+                  color: cs.onSurfaceVariant,
                 ),
               ),
               const Spacer(),
               TextButton(
-                onPressed: () {},
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.anomalyDetection,
+                ),
                 style: TextButton.styleFrom(
                   foregroundColor: alert.severityColor,
                   padding: const EdgeInsets.symmetric(

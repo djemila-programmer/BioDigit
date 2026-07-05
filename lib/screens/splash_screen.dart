@@ -34,14 +34,15 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       body: Container(
         decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment.topLeft,
             radius: 1.5,
-            colors: [AppTheme.primaryContainer, AppTheme.background],
+            colors: [AppTheme.primaryContainer, cs.surface],
             stops: const [0.0, 0.5],
           ),
         ),
@@ -146,20 +147,20 @@ class _SplashScreenState extends State<SplashScreen>
                                   fontSize: (w * 0.04).clamp(13.0, 16.0),
                                   height: 1.5,
                                   letterSpacing: 0.5,
-                                  color: AppTheme.onSurfaceVariant,
+                                  color: cs.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              const Text(
+                              Text(
                                 'POWERED BY IOT',
-                                style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w500, color: AppTheme.outline),
+                                style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w500, color: cs.outline),
                               ),
                               const SizedBox(height: 8),
                               Container(
                                 width: 96,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppTheme.outlineVariant,
+                                  color: cs.outlineVariant,
                                   borderRadius: BorderRadius.circular(9999),
                                 ),
                                 child: FractionallySizedBox(
@@ -187,7 +188,7 @@ class _SplashScreenState extends State<SplashScreen>
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => Navigator.pushNamed(context, AppRoutes.onboarding),
+                            onPressed: () => Navigator.pushNamed(context, AppRoutes.landing),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
@@ -204,7 +205,7 @@ class _SplashScreenState extends State<SplashScreen>
                         const SizedBox(height: 12),
                         Text(
                           'v2.4.0 • Plateau Central, Burkina Faso',
-                          style: TextStyle(fontSize: 11, color: AppTheme.outlineVariant, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+                          style: TextStyle(fontSize: 11, color: cs.outlineVariant, fontWeight: FontWeight.w500, letterSpacing: 0.5),
                         ),
                       ],
                     ),

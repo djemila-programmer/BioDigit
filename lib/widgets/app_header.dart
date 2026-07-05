@@ -19,8 +19,17 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppTheme.surfaceColor(context) : AppTheme.surface;
+    final borderColor = isDark ? AppTheme.borderStrong(context) : AppTheme.outlineVariant.withValues(alpha: 0.18);
+
     return Container(
-      color: AppTheme.surface.withValues(alpha: 0.8),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        border: Border(
+          bottom: BorderSide(color: borderColor),
+        ),
+      ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -35,24 +44,24 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
                 ),
               CircleAvatar(
-                radius: 20,
-                backgroundColor: AppTheme.primaryContainer,
-                child: const Icon(Icons.eco, color: AppTheme.onPrimary, size: 20),
+                radius: 18,
+                backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.12),
+                child: const Icon(Icons.eco, color: AppTheme.primary, size: 18),
               ),
               const SizedBox(width: 12),
               Text(
                 title ?? 'BioDigit',
                 style: const TextStyle(
-                  fontSize: 22,
-                  height: 28 / 22,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 20,
+                  height: 26 / 20,
+                  fontWeight: FontWeight.w600,
                   color: AppTheme.primary,
                 ),
               ),
               const Spacer(),
               IconButton(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.notifications),
-                icon: const Icon(Icons.notifications, color: AppTheme.onSurfaceVariant),
+                icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.onSurfaceVariant),
               ),
               if (actions != null) ...actions!,
             ],

@@ -1,19 +1,11 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../main.dart';
+import '../supabase.dart';
 import 'sensor_service.dart';
 
-/// Push notification service using Firebase Cloud Messaging + local notifications.
+/// Push notification service using Supabase Realtime + local notifications.
 class NotificationService {
-  FirebaseMessaging? _fcm;
   FlutterLocalNotificationsPlugin? _localNotifications;
   bool _initialized = false;
-
-  FirebaseMessaging? get _fcmInst {
-    if (!firebaseReady) return null;
-    _fcm ??= FirebaseMessaging.instance;
-    return _fcm;
-  }
 
   FlutterLocalNotificationsPlugin? get _localNotif {
     _localNotifications ??= FlutterLocalNotificationsPlugin();
@@ -22,48 +14,57 @@ class NotificationService {
 
   /// Initialize notification service.
   Future<void> initialize() async {
-    if (_initialized || _fcmInst == null) return;
-
-    final settings = await _fcmInst!.requestPermission(
-      alert: true, badge: true, sound: true, provisional: false,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      final token = await _fcmInst!.getToken();
-      if (token != null) await _saveToken(token);
-      _fcmInst!.onTokenRefresh.listen(_saveToken);
-    }
+    if (_initialized) return;
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true, requestBadgePermission: true, requestSoundPermission: true,
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
     );
-    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+    const windowsSettings = WindowsInitializationSettings(
+      appName: 'BioSmart Africa',
+      appUserModelId: 'com.biosmart.africa',
+      guid: 'b3d7e8a1-4f2c-4a5b-9d6e-7f8a1b2c3d4e',
+    );
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+      windows: windowsSettings,
+    );
     await _localNotif!.initialize(initSettings);
 
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+    // Listen to real-time notifications from Supabase
+    _listenToNotifications();
 
     _initialized = true;
   }
 
-  /// Save FCM token to Firestore.
-  Future<void> _saveToken(String token) async {
-    // Token is saved by the auth provider when user is logged in
-    // This is handled in the AuthProvider
-  }
+  /// Listen to notifications from Supabase Realtime.
+  void _listenToNotifications() {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
 
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
-    await _showLocalNotification(
-      title: notification.title ?? 'BioSmart',
-      body: notification.body ?? '',
-    );
+    supabase
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', uid)
+        .listen((rows) {
+      final unread = rows.where((row) => row['read'] != true).toList();
+      for (final row in unread) {
+        _showLocalNotification(
+          title: row['title']?.toString() ?? 'BioSmart',
+          body: row['body']?.toString() ?? '',
+          id: row['id']?.hashCode ?? 0,
+        );
+      }
+    });
   }
 
   Future<void> _showLocalNotification({
-    required String title, required String body, int id = 0,
+    required String title,
+    required String body,
+    int id = 0,
   }) async {
     if (_localNotif == null) return;
     const androidDetails = AndroidNotificationDetails(
@@ -75,7 +76,10 @@ class NotificationService {
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true, presentBadge: true, presentSound: true,
     );
-    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    const windowsDetails = WindowsNotificationDetails();
+    const details = NotificationDetails(
+      android: androidDetails, iOS: iosDetails, windows: windowsDetails,
+    );
     await _localNotif!.show(id, title, body, details);
   }
 
@@ -83,39 +87,89 @@ class NotificationService {
     if (!_initialized || _localNotif == null) return;
     int notificationId = 100;
     if (reading.temperature > 40 || reading.temperature < 25) {
-      await _showLocalNotification(id: notificationId++,
-        title: '🌡️ Température Critique',
-        body: 'Température à ${reading.temperature.toStringAsFixed(1)}°C — action requise.');
+      await _showLocalNotification(
+        id: notificationId++,
+        title: 'Température Critique',
+        body: 'Température à ${reading.temperature.toStringAsFixed(1)}°C — action requise.',
+      );
     }
     if (reading.pressure > 1.5 || reading.pressure < 0.8) {
-      await _showLocalNotification(id: notificationId++,
-        title: '⚠️ Pression Critique',
-        body: 'Pression à ${reading.pressure.toStringAsFixed(2)} bar — vérifiez la soupape.');
+      await _showLocalNotification(
+        id: notificationId++,
+        title: 'Pression Critique',
+        body: 'Pression à ${reading.pressure.toStringAsFixed(2)} bar — vérifiez la soupape.',
+      );
     }
     if (reading.methane > 500 || reading.methane < 150) {
-      await _showLocalNotification(id: notificationId++,
-        title: '💨 Méthane Critique',
-        body: 'Méthane à ${reading.methane.toStringAsFixed(0)} ppm — risque de fuite.');
+      await _showLocalNotification(
+        id: notificationId++,
+        title: 'Méthane Critique',
+        body: 'Méthane à ${reading.methane.toStringAsFixed(0)} ppm — risque de fuite.',
+      );
     }
     if (reading.slurryLevel > 90 || reading.slurryLevel < 20) {
-      await _showLocalNotification(id: notificationId++,
-        title: '📊 Niveau de Lisier Critique',
-        body: 'Niveau à ${reading.slurryLevel.toStringAsFixed(1)}% — vidange nécessaire.');
+      await _showLocalNotification(
+        id: notificationId++,
+        title: 'Niveau de Lisier Critique',
+        body: 'Niveau à ${reading.slurryLevel.toStringAsFixed(1)}% — vidange nécessaire.',
+      );
     }
+  }
+
+  /// Stream of notifications for the current user.
+  Stream<List<AppNotification>> notificationsStream() {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return Stream.value([]);
+    return supabase
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', uid)
+        .order('created_at', ascending: false)
+        .map((rows) => rows.map((row) => AppNotification.fromSupabase(row)).toList());
+  }
+
+  /// Mark a notification as read.
+  Future<void> markAsRead(String id) async {
+    await supabase.from('notifications').update({'read': true}).eq('id', id);
   }
 
   Future<void> subscribeToTopic(String topic) async {
-    await _fcmInst?.subscribeToTopic(topic);
+    // Supabase doesn't have topics like FCM. Use filters instead.
   }
 
   Future<void> unsubscribeFromTopic(String topic) async {
-    await _fcmInst?.unsubscribeFromTopic(topic);
+    // Supabase doesn't have topics like FCM. Use filters instead.
   }
 }
 
-/// Background message handler (must be top-level function).
-@pragma('vm:entry-point')
-Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  // Firebase handles background notifications automatically
-  // This is called when a data-only message is received in background
+/// Notification model for Supabase.
+class AppNotification {
+  final String id;
+  final String title;
+  final String body;
+  final String type;
+  final bool read;
+  final DateTime? createdAt;
+
+  const AppNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.type,
+    required this.read,
+    this.createdAt,
+  });
+
+  factory AppNotification.fromSupabase(Map<String, dynamic> data) {
+    return AppNotification(
+      id: data['id']?.toString() ?? '',
+      title: data['title']?.toString() ?? '',
+      body: data['body']?.toString() ?? '',
+      type: data['type']?.toString() ?? 'info',
+      read: data['read'] == true,
+      createdAt: data['created_at'] != null
+          ? DateTime.tryParse(data['created_at'].toString())
+          : null,
+    );
+  }
 }

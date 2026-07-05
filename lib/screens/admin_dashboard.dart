@@ -27,7 +27,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     {'icon': Icons.settings, 'label': 'Settings'},
   ];
 
-  Widget _getPage(int index) {
+  Widget _getPage(BuildContext context, int index) {
     switch (index) {
       case 0:
         return const _AdminHomeContent();
@@ -46,8 +46,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -55,7 +56,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             if (isMobile) {
               return Column(
                 children: [
-                  Expanded(child: _getPage(_currentIndex)),
+                  Expanded(child: _getPage(context, _currentIndex)),
                   _buildBottomNav(),
                 ],
               );
@@ -67,7 +68,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return Row(
               children: [
                 _buildSidebar(context, sidebarWidth),
-                Expanded(child: _getPage(_currentIndex)),
+                Expanded(child: _getPage(context, _currentIndex)),
               ],
             );
           },
@@ -77,12 +78,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildBottomNav() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         border: Border(
           top: BorderSide(
-            color: AppTheme.outlineVariant.withValues(alpha: 0.3),
+            color: cs.outlineVariant.withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -106,7 +108,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         size: 22,
                         color: active
                             ? AppTheme.primary
-                            : AppTheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -116,7 +118,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           fontWeight: FontWeight.w500,
                           color: active
                               ? AppTheme.primary
-                              : AppTheme.onSurfaceVariant.withValues(
+                              : Theme.of(context).colorScheme.onSurfaceVariant.withValues(
                                   alpha: 0.5,
                                 ),
                         ),
@@ -187,6 +189,7 @@ class _AdminHomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -200,12 +203,12 @@ class _AdminHomeContent extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Admin Dashboard',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.onSurface,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -213,7 +216,7 @@ class _AdminHomeContent extends StatelessWidget {
                       'BioSmart Burkina Faso',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -224,9 +227,9 @@ class _AdminHomeContent extends StatelessWidget {
                             context,
                             AppRoutes.notifications,
                           ),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.notifications_outlined,
-                            color: AppTheme.onSurfaceVariant,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const Spacer(),
@@ -249,7 +252,7 @@ class _AdminHomeContent extends StatelessWidget {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -257,7 +260,7 @@ class _AdminHomeContent extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.onSurface,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 4),
@@ -265,7 +268,7 @@ class _AdminHomeContent extends StatelessWidget {
                         'BioSmart Burkina Faso · Réseau de Monitoring',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppTheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -277,9 +280,9 @@ class _AdminHomeContent extends StatelessWidget {
                           context,
                           AppRoutes.notifications,
                         ),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.notifications_outlined,
-                          color: AppTheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -324,6 +327,7 @@ class _AdminHomeContent extends StatelessWidget {
                 return Column(
                   children: [
                     _bigStatCard(
+                      context,
                       activeText,
                       'Active Biodigesters',
                       Icons.storage,
@@ -332,6 +336,7 @@ class _AdminHomeContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _bigStatCard(
+                      context,
                       energyText,
                       'MWh Energy',
                       Icons.bolt,
@@ -346,6 +351,7 @@ class _AdminHomeContent extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: _bigStatCard(
+                                context,
                       activeText,
                       'Active Biodigesters',
                       Icons.storage,
@@ -356,6 +362,7 @@ class _AdminHomeContent extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _bigStatCard(
+                                context,
                       energyText,
                       'MWh Energy',
                       Icons.bolt,
@@ -375,17 +382,17 @@ class _AdminHomeContent extends StatelessWidget {
               if (narrow) {
                 return Column(
                   children: [
-                    _alertDensityCard(),
+                    _alertDensityCard(context),
                     const SizedBox(height: 12),
-                    _performanceCard(),
+                    _performanceCard(context),
                   ],
                 );
               }
               return Row(
                 children: [
-                  Expanded(child: _alertDensityCard()),
+                  Expanded(child: _alertDensityCard(context)),
                   const SizedBox(width: 12),
-                  Expanded(child: _performanceCard()),
+                  Expanded(child: _performanceCard(context)),
                 ],
               );
             },
@@ -395,12 +402,12 @@ class _AdminHomeContent extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Farm Manager Directory',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               TextButton(
@@ -414,12 +421,12 @@ class _AdminHomeContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerHigh,
+              color: cs.surfaceContainerHigh,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(12),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -428,7 +435,7 @@ class _AdminHomeContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -439,7 +446,7 @@ class _AdminHomeContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -449,21 +456,21 @@ class _AdminHomeContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          ...FarmManager.mockManagers.map((m) => _managerRow(m)),
+          ...FarmManager.mockManagers.map((m) => _managerRow(context, m)),
           const SizedBox(height: 24),
           Text(
             'System Configuration',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppTheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -512,7 +519,7 @@ class _AdminHomeContent extends StatelessWidget {
                   Icons.settings,
                   'System Config',
                   'v2.4.1-bf',
-                  AppTheme.onSurfaceVariant,
+                  Theme.of(context).colorScheme.onSurfaceVariant,
                   AppRoutes.settings,
                 ),
               ];
@@ -565,19 +572,21 @@ class _AdminHomeContent extends StatelessWidget {
   }
 
   Widget _bigStatCard(
+    BuildContext context,
     String value,
     String label,
     IconData icon,
     Color color,
     String subtitle,
   ) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.2),
+          color: cs.outlineVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -617,15 +626,15 @@ class _AdminHomeContent extends StatelessWidget {
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w700,
-              color: AppTheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: AppTheme.onSurfaceVariant,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -633,25 +642,26 @@ class _AdminHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _alertDensityCard() {
+  Widget _alertDensityCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.2),
+          color: cs.outlineVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Alert Density',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppTheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -660,24 +670,24 @@ class _AdminHomeContent extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _heatBar(0.3, AppTheme.primary, 'Mon'),
-                _heatBar(0.5, const Color(0xFFF57F17), 'Tue'),
-                _heatBar(0.8, AppTheme.error, 'Wed'),
-                _heatBar(0.4, const Color(0xFFF57F17), 'Thu'),
-                _heatBar(0.2, AppTheme.primary, 'Fri'),
-                _heatBar(0.6, const Color(0xFFF57F17), 'Sat'),
-                _heatBar(0.35, AppTheme.primary, 'Sun'),
+                _heatBar(context, 0.3, AppTheme.primary, 'Mon'),
+                _heatBar(context, 0.5, const Color(0xFFF57F17), 'Tue'),
+                _heatBar(context, 0.8, AppTheme.error, 'Wed'),
+                _heatBar(context, 0.4, const Color(0xFFF57F17), 'Thu'),
+                _heatBar(context, 0.2, AppTheme.primary, 'Fri'),
+                _heatBar(context, 0.6, const Color(0xFFF57F17), 'Sat'),
+                _heatBar(context, 0.35, AppTheme.primary, 'Sun'),
               ],
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              _legendDot(AppTheme.primary, 'Normal'),
+              _legendDot(context, AppTheme.primary, 'Normal'),
               const SizedBox(width: 12),
-              _legendDot(const Color(0xFFF57F17), 'Warning'),
+              _legendDot(context, const Color(0xFFF57F17), 'Warning'),
               const SizedBox(width: 12),
-              _legendDot(AppTheme.error, 'Critical'),
+              _legendDot(context, AppTheme.error, 'Critical'),
             ],
           ),
         ],
@@ -685,41 +695,42 @@ class _AdminHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _performanceCard() {
+  Widget _performanceCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.2),
+          color: cs.outlineVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Performance Metrics',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppTheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
-          _perfMetric('Avg Methane', '64.2%', 0.64, AppTheme.primary),
+          _perfMetric(context, 'Avg Methane', '64.2%', 0.64, AppTheme.primary),
           const SizedBox(height: 10),
-          _perfMetric('System Pressure', '2.4 bar', 0.6, AppTheme.tertiary),
+          _perfMetric(context, 'System Pressure', '2.4 bar', 0.6, AppTheme.tertiary),
           const SizedBox(height: 10),
-          _perfMetric('Digester Temp', '37.5°C', 0.75, AppTheme.secondary),
+          _perfMetric(context, 'Digester Temp', '37.5°C', 0.75, AppTheme.secondary),
           const SizedBox(height: 10),
-          _perfMetric('pH Level', '7.1', 0.71, const Color(0xFF2E7D32)),
+          _perfMetric(context, 'pH Level', '7.1', 0.71, const Color(0xFF2E7D32)),
         ],
       ),
     );
   }
 
-  Widget _heatBar(double height, Color color, String label) {
+  Widget _heatBar(BuildContext context, double height, Color color, String label) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -740,7 +751,7 @@ class _AdminHomeContent extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(fontSize: 9, color: AppTheme.outline),
+              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.outlineVariant),
             ),
           ],
         ),
@@ -748,7 +759,7 @@ class _AdminHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _legendDot(Color color, String label) {
+  Widget _legendDot(BuildContext context, Color color, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -763,16 +774,17 @@ class _AdminHomeContent extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
-            color: AppTheme.onSurfaceVariant,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
   }
 
-  Widget _perfMetric(String label, String value, double progress, Color color) {
+  Widget _perfMetric(BuildContext context, String label, String value, double progress, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -781,9 +793,9 @@ class _AdminHomeContent extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             Text(
@@ -802,7 +814,7 @@ class _AdminHomeContent extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 4,
-            backgroundColor: AppTheme.surfaceContainer,
+            backgroundColor: cs.surfaceContainerHigh,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -810,7 +822,8 @@ class _AdminHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _managerRow(FarmManager manager) {
+  Widget _managerRow(BuildContext context, FarmManager manager) {
+    final cs = Theme.of(context).colorScheme;
     Color statusColor;
     switch (manager.status) {
       case 'Healthy':
@@ -826,10 +839,10 @@ class _AdminHomeContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.outlineVariant.withValues(alpha: 0.2),
+            color: cs.outlineVariant.withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -846,7 +859,7 @@ class _AdminHomeContent extends StatelessWidget {
                   ),
                   child: Text(
                     manager.initials,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.primary,
@@ -860,17 +873,17 @@ class _AdminHomeContent extends StatelessWidget {
                     children: [
                       Text(
                         manager.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.onSurface,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         manager.email,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppTheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -883,9 +896,9 @@ class _AdminHomeContent extends StatelessWidget {
             flex: 2,
             child: Text(
               manager.assignedFarm,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppTheme.onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -919,17 +932,25 @@ class _AdminHomeContent extends StatelessWidget {
     String route,
   ) {
     return Builder(
-      builder: (context) => InkWell(
-        onTap: route.isNotEmpty
-            ? () => Navigator.pushNamed(context, route)
-            : null,
+      builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        return InkWell(
+        onTap: () {
+          if (route.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$title is coming soon.')),
+            );
+            return;
+          }
+          Navigator.pushNamed(context, route);
+        },
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cs.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.outlineVariant.withValues(alpha: 0.2),
+              color: cs.outlineVariant.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -946,23 +967,24 @@ class _AdminHomeContent extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: AppTheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -973,6 +995,7 @@ class _AdminUsersContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final users = [
       {
         'name': 'Djemila Bonkoungou',
@@ -1010,29 +1033,29 @@ class _AdminUsersContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'User Management',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppTheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '${users.length} registered users',
-            style: TextStyle(fontSize: 13, color: AppTheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerHigh,
+              color: cs.surfaceContainerHigh,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(12),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -1041,7 +1064,7 @@ class _AdminUsersContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -1051,7 +1074,7 @@ class _AdminUsersContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -1061,7 +1084,7 @@ class _AdminUsersContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -1072,14 +1095,14 @@ class _AdminUsersContent extends StatelessWidget {
             final isActive = u['status'] == 'Active';
             final statusColor = isActive
                 ? const Color(0xFF1B5E20)
-                : AppTheme.outline;
+                : cs.outlineVariant;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surfaceContainerHighest,
                 border: Border(
                   bottom: BorderSide(
-                    color: AppTheme.outlineVariant.withValues(alpha: 0.2),
+                    color: cs.outlineVariant.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -1092,17 +1115,17 @@ class _AdminUsersContent extends StatelessWidget {
                       children: [
                         Text(
                           u['name']!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: AppTheme.onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           u['email']!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppTheme.onSurfaceVariant,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1111,9 +1134,9 @@ class _AdminUsersContent extends StatelessWidget {
                   Expanded(
                     child: Text(
                       u['role']!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),

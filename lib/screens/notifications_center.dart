@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class NotificationsCenter extends StatefulWidget {
   const NotificationsCenter({super.key});
@@ -109,32 +110,44 @@ class _NotificationsCenterState extends State<NotificationsCenter> {
         ? _notifications
         : _notifications.where((n) => n.type == _selectedTab.toLowerCase()).toList();
 
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: AppHeader(
         title: 'Notifications',
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                for (final item in _notifications) {
+                  item.unread = false;
+                }
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All notifications marked as read.')),
+              );
+            },
             child: const Text('Mark all read', style: TextStyle(fontSize: 13)),
           ),
         ],
       ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
       body: Column(
         children: [
           // Tabs
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: ['All', 'Critical', 'Warning', 'Info'].map((tab) {
                 final selected = _selectedTab == tab;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedTab = tab),
                   child: Container(
-                    margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: selected ? AppTheme.primary : AppTheme.surfaceContainerHighest,
+                      color: selected ? AppTheme.primary : cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
@@ -142,7 +155,7 @@ class _NotificationsCenterState extends State<NotificationsCenter> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: selected ? AppTheme.onPrimary : AppTheme.onSurfaceVariant,
+                        color: selected ? AppTheme.onPrimary : cs.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -185,14 +198,15 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: notification.unread ? _color.withValues(alpha: 0.04) : Colors.white,
+        color: notification.unread ? _color.withValues(alpha: 0.04) : cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: notification.unread ? _color.withValues(alpha: 0.2) : AppTheme.outlineVariant.withValues(alpha: 0.2),
+          color: notification.unread ? _color.withValues(alpha: 0.2) : cs.outlineVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -219,7 +233,7 @@ class _NotificationTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.onSurface,
+                          color: cs.onSurface,
                         ),
                       ),
                     ),
@@ -237,12 +251,12 @@ class _NotificationTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   notification.subtitle,
-                  style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant),
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   notification.time,
-                  style: const TextStyle(fontSize: 11, color: AppTheme.outline),
+                  style: TextStyle(fontSize: 11, color: cs.outline),
                 ),
               ],
             ),
@@ -259,9 +273,9 @@ class _Notification {
   final String subtitle;
   final String time;
   final String type;
-  final bool unread;
+  bool unread;
 
-  const _Notification({
+  _Notification({
     required this.icon,
     required this.title,
     required this.subtitle,

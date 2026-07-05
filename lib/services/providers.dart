@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../services/auth_service.dart';
 
@@ -11,6 +13,7 @@ import '../services/history_service.dart';
 import '../services/notification_service.dart';
 import '../services/cache_service.dart';
 import '../services/farm_service.dart';
+import '../services/simulation_service.dart';
 import '../models/user_model.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -24,10 +27,12 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   StreamSubscription? _authSub;
+  bool _isPasswordRecovery = false;
 
   AuthProvider(this._authService) {
-    _authSub = _authService.authStateChanges.listen((user) async {
-      if (user != null) {
+    _authSub = _authService.authStateChanges.listen((authState) async {
+      _isPasswordRecovery = authState.event == AuthChangeEvent.passwordRecovery;
+      if (authState.session != null) {
         _user = await _authService.getCurrentUserProfile();
       } else {
         _user = null;
@@ -40,9 +45,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
   String? get error => _error;
-
-  /// Callbacks to start data listeners after successful login.
-  VoidCallback? onDataListenersStart;
+  bool get isPasswordRecovery => _isPasswordRecovery;
 
   Future<bool> signIn(
     String email,
@@ -60,7 +63,6 @@ class AuthProvider extends ChangeNotifier {
       );
       _isLoading = false;
       notifyListeners();
-      if (_user != null) onDataListenersStart?.call();
       return _user != null;
     } catch (e) {
       _error = e.toString();
@@ -103,9 +105,27 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> signInWithGoogle({String expectedRole = 'user'}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      _user = await _authService.signInWithGoogle(expectedRole: expectedRole);
+      _isLoading = false;
+      notifyListeners();
+      return _user != null;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     await _authService.signOut();
     _user = null;
+    _isPasswordRecovery = false;
     notifyListeners();
   }
 
@@ -162,6 +182,28 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> completePasswordReset(String newPassword) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _authService.completePasswordReset(newPassword);
+      _isLoading = false;
+      _isPasswordRecovery = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  void clearRecoveryState() {
+    _isPasswordRecovery = false;
+    notifyListeners();
+  }
+
   Future<void> updateProfile(Map<String, dynamic> updates) async {
     await _authService.updateUserProfile(updates);
     _user = await _authService.getCurrentUserProfile();
@@ -176,16 +218,15 @@ class AuthProvider extends ChangeNotifier {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Sensor Provider (real-time data from ESP32 via Firebase RTDB)
+// Sensor Provider (real-time data from ESP32 via Supabase Realtime)
 // ═══════════════════════════════════════════════════════════════════════════
 
 class SensorProvider extends ChangeNotifier {
   final SensorService _sensorService;
   final HistoryService _historyService;
-  // Injected and used in startListening() for critical threshold notifications.
   final NotificationService _notificationService;
-
   final CacheService _cacheService;
+  final SimulationService _simulationService;
 
   SensorReading? _latestReading;
   Esp32StatusData? _esp32Status;
@@ -194,12 +235,14 @@ class SensorProvider extends ChangeNotifier {
   bool _isLoading = true;
   String? _error;
   bool _isOnline = true;
+  bool _isSimulation = false;
 
   SensorProvider(
     this._sensorService,
     this._historyService,
     this._notificationService,
     this._cacheService,
+    this._simulationService,
   );
 
   SensorReading? get latestReading => _latestReading;
@@ -207,34 +250,35 @@ class SensorProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isOnline => _isOnline;
+  bool get isSimulation => _isSimulation;
 
   /// Start listening to real-time sensor data.
+  /// Shows empty state until a real ESP32 connects and pushes data.
   void startListening() {
     _isLoading = true;
     notifyListeners();
 
     _sensorSub = _sensorService.sensorDataStream().listen(
       (reading) async {
+        // Real data arrived from ESP32
+        if (_isSimulation) {
+          _simulationService.stop();
+          _isSimulation = false;
+        }
         _latestReading = reading;
         _isLoading = false;
         _error = null;
         _isOnline = true;
         notifyListeners();
 
-        // Cache for offline
         await _cacheService.cacheSensorReading(reading);
-
-        // Log to history
         await _historyService.logReading(reading);
-
-        // Check for critical values and notify
         await _notificationService.checkAndNotify(reading);
       },
       onError: (e) {
         _error = e.toString();
         _isLoading = false;
         _isOnline = false;
-        // Fall back to cache
         _latestReading = _cacheService.getLastCachedReading();
         notifyListeners();
       },
@@ -243,6 +287,15 @@ class SensorProvider extends ChangeNotifier {
     _esp32Sub = _sensorService.esp32StatusStream().listen((status) {
       _esp32Status = status;
       notifyListeners();
+    });
+
+    // No simulation - just mark as loaded after delay if no data
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_latestReading == null || _latestReading!.temperature == 0) {
+        _isLoading = false;
+        _isSimulation = false;
+        notifyListeners();
+      }
     });
   }
 
@@ -257,6 +310,7 @@ class SensorProvider extends ChangeNotifier {
   void stopListening() {
     _sensorSub?.cancel();
     _esp32Sub?.cancel();
+    _simulationService.stop();
   }
 
   @override
@@ -339,7 +393,6 @@ class AnomalyProvider extends ChangeNotifier {
   Future<void> analyze(SensorReading reading) async {
     _report = _anomalyService.analyze(reading);
     notifyListeners();
-    // Persist to Firestore
     await _anomalyService.saveReport(_report!);
   }
 
@@ -503,43 +556,46 @@ class FarmProvider extends ChangeNotifier {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Notification Provider (Firestore-persisted notifications)
+// Notification Provider
 // ═══════════════════════════════════════════════════════════════════════════
 
 class NotificationProvider extends ChangeNotifier {
-  // ignore: unused_field
   final NotificationService _notificationService;
 
-  /// This project currently uses local notifications (FCM + flutter_local_notifications).
-  /// Persistent Firestore notifications are not implemented in NotificationService yet.
-  /// We keep the provider for future expansion and expose an empty state for now.
-  final List<Object> _notifications = const <Object>[];
-
+  List<AppNotification> _notifications = [];
   bool _isLoading = false;
   StreamSubscription? _sub;
 
-  // ignore: unused_field
   NotificationProvider(this._notificationService);
 
-  List<Object> get notifications => _notifications;
-
+  List<AppNotification> get notifications => _notifications;
   bool get isLoading => _isLoading;
-  int get unreadCount => 0;
+  int get unreadCount => _notifications.where((n) => !n.read).length;
 
   void startListening() {
-    // Not implemented yet (NotificationService has no Firestore stream).
-    // This will be completed when persistent notifications are implemented.
-
-    _isLoading = false;
+    _isLoading = true;
     notifyListeners();
+    _sub = _notificationService.notificationsStream().listen(
+      (notifications) {
+        _notifications = notifications;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (_) {
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> markAsRead(String id) async {
-    // Not implemented yet.
+    await _notificationService.markAsRead(id);
   }
 
   Future<void> markAllAsRead() async {
-    // Not implemented yet.
+    for (final n in _notifications.where((n) => !n.read)) {
+      await _notificationService.markAsRead(n.id);
+    }
   }
 
   void stopListening() {
@@ -554,7 +610,7 @@ class NotificationProvider extends ChangeNotifier {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Theme Provider (Dark/Light mode with Hive persistence)
+// Theme Provider
 // ═══════════════════════════════════════════════════════════════════════════
 
 class ThemeProvider extends ChangeNotifier {
@@ -578,16 +634,57 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   dynamic get _themeBox {
-    // CacheService does not expose getBox in this codebase.
-    // Theme persistence will be wired when a proper Hive box accessor is added.
-    return null;
+    try {
+      return Hive.box('themeBox');
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> toggleTheme(bool dark) async {
     _themeMode = dark ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
     try {
-      _themeBox?.put('darkMode', dark);
+      final box = _themeBox;
+      if (box != null) {
+        await box.put('darkMode', dark);
+      }
     } catch (_) {}
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Locale Provider (French + English only)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class LocaleProvider extends ChangeNotifier {
+  Locale _locale = const Locale('fr');
+
+  Locale get locale => _locale;
+  bool get isFrench => _locale.languageCode == 'fr';
+
+  LocaleProvider() {
+    _loadFromCache();
+  }
+
+  void _loadFromCache() {
+    try {
+      final box = Hive.box('localeBox');
+      final saved = box.get('language', defaultValue: 'fr') as String;
+      _locale = Locale(saved);
+    } catch (_) {}
+  }
+
+  Future<void> setLocale(Locale locale) async {
+    _locale = locale;
+    notifyListeners();
+    try {
+      final box = await Hive.openBox('localeBox');
+      await box.put('language', locale.languageCode);
+    } catch (_) {}
+  }
+
+  Future<void> toggleLanguage(bool isFrench) async {
+    await setLocale(Locale(isFrench ? 'fr' : 'en'));
   }
 }

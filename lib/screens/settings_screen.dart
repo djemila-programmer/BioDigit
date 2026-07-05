@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../models/user_model.dart';
+import 'package:provider/provider.dart';
+
 import '../routes.dart';
+import '../services/providers.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_header.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,210 +15,230 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkMode = false;
-  String _selectedLanguage = 'Français';
-
   @override
   Widget build(BuildContext context) {
-    final user = UserModel.mockUser;
+    return Consumer3<AuthProvider, ThemeProvider, LocaleProvider>(
+      builder: (context, auth, theme, localeProvider, _) {
+        final user = auth.user;
+        final isFrench = localeProvider.isFrench;
+        final cs = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0.8),
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
-        ),
-        title: const Text('Settings', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, color: AppTheme.primary)),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.notifications),
-            icon: const Icon(Icons.notifications, color: AppTheme.onSurfaceVariant),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.containerPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.1),
-                    child: const Icon(Icons.person, color: AppTheme.primary, size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        return Scaffold(
+          backgroundColor: cs.surface,
+          appBar: AppHeader(title: isFrench ? 'Paramètres' : 'Settings', showBackButton: true),
+          bottomNavigationBar: const BottomNavBar(currentIndex: 4),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.containerPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.userProfile),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
                       children: [
-                        Text(user.fullName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface)),
-                        Text(user.email, style: const TextStyle(fontSize: 13, color: AppTheme.onSurfaceVariant)),
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundColor: cs.primaryContainer.withValues(alpha: 0.2),
+                          child: Icon(Icons.person, color: cs.primary, size: 32),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.fullName ?? (isFrench ? 'Utilisateur' : 'User'),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface),
+                              ),
+                              Text(
+                                user?.email ?? '',
+                                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right, color: cs.outline),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: AppTheme.outline),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Account section
-            _sectionTitle('Account'),
-            const SizedBox(height: 12),
-            _settingsTile(Icons.security, 'Security', 'Password, 2FA', () {}),
-            _settingsTile(Icons.wifi, 'ESP32 Connection', 'Connected · 192.168.1.100', () {}),
-            _settingsTile(Icons.notifications_outlined, 'Notifications', 'Alerts & push settings', () {}),
-            const SizedBox(height: 24),
-            // Preferences section
-            _sectionTitle('Preferences'),
-            const SizedBox(height: 12),
-            // Language
-            _languageTile(),
-            // Dark mode
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.tertiary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.dark_mode, size: 20, color: AppTheme.tertiary),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text('Dark Mode', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
-                  ),
-                  Switch(
-                    value: _darkMode,
-                    onChanged: (value) => setState(() => _darkMode = value),
-                    activeColor: AppTheme.primary,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Support section
-            _sectionTitle('Support'),
-            const SizedBox(height: 12),
-            _settingsTile(Icons.help_outline, 'Help Center', 'FAQs & guides', () {}),
-            _settingsTile(Icons.info_outline, 'About', 'Version 2.1.0', () {}),
-            _settingsTile(Icons.privacy_tip_outlined, 'Privacy Policy', 'Data & permissions', () {}),
-            const SizedBox(height: 32),
-            // Logout
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false),
-                icon: const Icon(Icons.logout, color: AppTheme.error),
-                label: const Text('Sign Out', style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.error),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-              ),
+                const SizedBox(height: 24),
+                _sectionTitle(isFrench ? 'Compte' : 'Account', color: cs.onSurfaceVariant),
+                const SizedBox(height: 12),
+                _settingsTile(context, Icons.security, isFrench ? 'Sécurité' : 'Security', isFrench ? 'Mot de passe, session et protection' : 'Password, session and protection', () => Navigator.pushNamed(context, AppRoutes.changePassword)),
+                _settingsTile(context, Icons.wifi, isFrench ? 'Connexion ESP32' : 'ESP32 Connection', isFrench ? 'Connecté · 192.168.1.100' : 'Connected · 192.168.1.100', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(isFrench ? 'Les détails de connexion ESP32 sont en lecture seule.' : 'ESP32 connection details are read-only for now.')),
+                  );
+                }),
+                _settingsTile(context, Icons.notifications_outlined, isFrench ? 'Notifications' : 'Notifications', isFrench ? 'Alertes et notifications push' : 'Alerts and push settings', () => Navigator.pushNamed(context, AppRoutes.notifications)),
+                const SizedBox(height: 24),
+                _sectionTitle(isFrench ? 'Préférences' : 'Preferences', color: cs.onSurfaceVariant),
+                const SizedBox(height: 12),
+                _languageTile(context, localeProvider, isFrench),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: cs.tertiaryContainer.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.dark_mode, size: 20, color: cs.tertiary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(isFrench ? 'Mode sombre' : 'Dark Mode', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface)),
+                      ),
+                      Switch(
+                        value: theme.isDark,
+                        onChanged: (value) => theme.toggleTheme(value),
+                        activeColor: cs.primary,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _sectionTitle(isFrench ? 'Support' : 'Support', color: cs.onSurfaceVariant),
+                const SizedBox(height: 12),
+                _settingsTile(context, Icons.help_outline, isFrench ? "Centre d'aide" : 'Help Center', isFrench ? 'FAQ et guides' : 'FAQs & guides', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(isFrench ? "Le centre d'aide sera disponible dans la prochaine version." : 'Help center will be available in the next release.')),
+                  );
+                }),
+                _settingsTile(context, Icons.info_outline, isFrench ? 'À propos' : 'About', '${isFrench ? 'Version' : 'Version'} 2.1.0', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('BioDigit app v2.1.0')), 
+                  );
+                }),
+                _settingsTile(context, Icons.privacy_tip_outlined, isFrench ? 'Politique de confidentialité' : 'Privacy Policy', isFrench ? 'Données et autorisations' : 'Data & permissions', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(isFrench ? 'La page de politique de confidentialité arrive bientôt.' : 'Privacy policy page is coming soon.')),
+                  );
+                }),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await auth.signOut();
+                      if (!context.mounted) return;
+                      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+                    },
+                    icon: Icon(Icons.logout, color: cs.error),
+                    label: Text(isFrench ? 'Déconnexion' : 'Sign out', style: TextStyle(color: cs.error, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: cs.error),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.onSurfaceVariant, letterSpacing: 0.5));
+  Widget _sectionTitle(String title, {Color? color}) {
+    return Text(
+      title,
+      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.5),
+    );
   }
 
-  Widget _settingsTile(IconData icon, String title, String subtitle, VoidCallback onTap) {
+  Widget _settingsTile(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.1),
+                color: cs.primaryContainer.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 20, color: AppTheme.primary),
+              child: Icon(icon, size: 20, color: cs.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant)),
+                  Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface)),
+                  Text(subtitle, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20, color: AppTheme.outline),
+            Icon(Icons.chevron_right, size: 20, color: cs.outline),
           ],
         ),
       ),
     );
   }
 
-  Widget _languageTile() {
+  Widget _languageTile(BuildContext context, LocaleProvider localeProvider, bool isFrench) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.2)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.secondary.withValues(alpha: 0.1),
+              color: cs.secondaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.language, size: 20, color: AppTheme.secondary),
+            child: Icon(Icons.language, size: 20, color: cs.secondary),
           ),
           const SizedBox(width: 12),
-          const Expanded(
-            child: Text('Language', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
+          Expanded(
+            child: Text(isFrench ? 'Langue' : 'Language', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface)),
           ),
           DropdownButton<String>(
-            value: _selectedLanguage,
+            value: localeProvider.locale.languageCode,
             underline: const SizedBox(),
-            style: const TextStyle(fontSize: 13, color: AppTheme.onSurfaceVariant),
-            items: ['Français', 'Mooré', 'Dioula', 'English'].map((lang) {
-              return DropdownMenuItem(value: lang, child: Text(lang));
-            }).toList(),
+            style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+            items: [
+              DropdownMenuItem(value: 'fr', child: Text(isFrench ? 'Français' : 'French')),
+              DropdownMenuItem(value: 'en', child: Text('English')),
+            ],
             onChanged: (value) {
-              if (value != null) setState(() => _selectedLanguage = value);
+              if (value != null) {
+                localeProvider.setLocale(Locale(value));
+              }
             },
           ),
         ],

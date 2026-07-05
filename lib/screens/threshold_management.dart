@@ -21,8 +21,9 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: const AppHeader(title: 'Threshold Configuration', showBackButton: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
@@ -66,7 +67,9 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
                     style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8)),
                   ),
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
                     children: [
                       _heroStat(Icons.tune, '4 Parameters'),
                       const SizedBox(width: 16),
@@ -83,14 +86,14 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
             // Threshold cards
             Text(
               'Operating Ranges',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface)
             ),
             const SizedBox(height: 12),
 
             ..._thresholds.asMap().entries.map((entry) {
               final index = entry.key;
               final threshold = entry.value;
-              return _buildThresholdCard(index, threshold);
+              return _buildThresholdCard(context, index, threshold);
             }),
 
             const SizedBox(height: 24),
@@ -122,6 +125,11 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
                   setState(() {
                     _thresholds = List.from(ThresholdConfig.mockThresholds);
                   });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Thresholds restored to defaults'),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.restore),
                 label: const Text('Reset to Defaults'),
@@ -144,17 +152,20 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
     );
   }
 
-  Widget _buildThresholdCard(int index, ThresholdConfig threshold) {
+  Widget _buildThresholdCard(BuildContext context, int index, ThresholdConfig threshold) {
+    final cs = Theme.of(context).colorScheme;
     final isWithinRange = threshold.currentValue >= threshold.minValue &&
         threshold.currentValue <= threshold.maxValue;
-    final rangePercent = (threshold.currentValue - threshold.minValue) /
-        (threshold.maxValue - threshold.minValue);
+    final rangeSpan = threshold.maxValue - threshold.minValue;
+    final rangePercent = rangeSpan == 0
+      ? 0.0
+      : (threshold.currentValue - threshold.minValue) / rangeSpan;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border(
           left: BorderSide(
@@ -191,7 +202,7 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
                   children: [
                     Text(
                       threshold.label,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.onSurface),
                     ),
                     Text(
                       'Current: ${threshold.currentValue} ${threshold.unit}',
@@ -229,7 +240,7 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
             child: LinearProgressIndicator(
               value: rangePercent.clamp(0.0, 1.0),
               minHeight: 6,
-              backgroundColor: AppTheme.surfaceContainer,
+              backgroundColor: cs.surfaceContainerHigh,
               valueColor: AlwaysStoppedAnimation<Color>(
                 isWithinRange ? AppTheme.primary : AppTheme.error,
               ),
@@ -240,9 +251,9 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
           // Min/Max sliders
           Row(
             children: [
-              _rangeValue('Min', threshold.minValue, threshold.unit, threshold.color),
+              _rangeValue(context, 'Min', threshold.minValue, threshold.unit, threshold.color),
               const Spacer(),
-              _rangeValue('Max', threshold.maxValue, threshold.unit, threshold.color),
+              _rangeValue(context, 'Max', threshold.maxValue, threshold.unit, threshold.color),
             ],
           ),
         ],
@@ -250,7 +261,8 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
     );
   }
 
-  Widget _rangeValue(String label, double value, String unit, Color color) {
+  Widget _rangeValue(BuildContext context, String label, double value, String unit, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -262,7 +274,7 @@ class _ThresholdManagementState extends State<ThresholdManagement> {
           children: [
             Text(value.toStringAsFixed(1), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
             const SizedBox(width: 2),
-            Text(unit, style: const TextStyle(fontSize: 11, color: AppTheme.onSurfaceVariant)),
+            Text(unit, style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
           ],
         ),
       ],

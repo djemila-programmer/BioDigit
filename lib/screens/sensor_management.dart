@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/sensor_model.dart';
 import '../widgets/app_header.dart';
+import '../widgets/bottom_nav_bar.dart';
 import '../widgets/common_widgets.dart';
 
 class SensorManagement extends StatelessWidget {
@@ -9,9 +10,11 @@ class SensorManagement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: cs.surface,
       appBar: const AppHeader(title: 'Sensor Management'),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(
@@ -41,11 +44,54 @@ class SensorManagement extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.onSurface,
+                color: cs.onSurface,
               ),
             ),
             const SizedBox(height: 16),
             ...SensorModel.mockSensors.map((sensor) => _SensorCard(sensor: sensor)),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    Text(
+                      'Maintenance Actions',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.onSurface),
+                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Sensor scheduling coming soon')),
+                          ),
+                          icon: const Icon(Icons.build),
+                          label: const Text('Schedule'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('QR sensor scanning coming soon')),
+                          ),
+                          icon: const Icon(Icons.qr_code_scanner),
+                          label: const Text('Scan Sensor'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -69,13 +115,14 @@ class _SensorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.outlineVariant.withValues(alpha: 0.3)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,11 +144,11 @@ class _SensorCard extends StatelessWidget {
                   children: [
                     Text(
                       sensor.name,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.onSurface),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.onSurface),
                     ),
                     Text(
                       sensor.modelNumber,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant),
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -116,12 +163,12 @@ class _SensorCard extends StatelessWidget {
             children: [
               Text(
                 sensor.value.toStringAsFixed(sensor.value >= 100 ? 0 : 1),
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: AppTheme.onSurface),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: cs.onSurface),
               ),
               const SizedBox(width: 4),
               Text(
                 sensor.unit,
-                style: const TextStyle(fontSize: 16, color: AppTheme.onSurfaceVariant),
+                style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
               ),
               const Spacer(),
               // Sparkline
@@ -158,7 +205,7 @@ class _SensorCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerLow,
+              color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -172,15 +219,15 @@ class _SensorCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Last Calibration', style: TextStyle(fontSize: 9, color: AppTheme.outline)),
-                            Text(sensor.lastCalibration, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
+                            Text('Last Calibration', style: TextStyle(fontSize: 9, color: cs.outline)),
+                            Text(sensor.lastCalibration, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: cs.onSurface)),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(width: 1, height: 24, color: AppTheme.outlineVariant),
+                Container(width: 1, height: 24, color: cs.outlineVariant),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Row(
@@ -191,8 +238,8 @@ class _SensorCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Next Maintenance', style: TextStyle(fontSize: 9, color: AppTheme.outline)),
-                            Text(sensor.nextMaintenance, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.onSurface)),
+                            Text('Next Maintenance', style: TextStyle(fontSize: 9, color: cs.outline)),
+                            Text(sensor.nextMaintenance, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: cs.onSurface)),
                           ],
                         ),
                       ),
@@ -206,7 +253,9 @@ class _SensorCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Sensor calibration coming soon')),
+              ),
               icon: const Icon(Icons.tune, size: 18),
               label: const Text('Calibrate Sensor'),
             ),

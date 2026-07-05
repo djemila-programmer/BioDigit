@@ -1,59 +1,35 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../main.dart';
+import '../supabase.dart';
 
-/// Firestore-based alert service for smart alert management.
+/// Supabase-based alert service for smart alert management.
 class AlertService {
-  FirebaseFirestore? _firestore;
-
-  FirebaseFirestore? get _fs {
-    if (!firebaseReady) return null;
-    _firestore ??= FirebaseFirestore.instance;
-    return _firestore;
-  }
-
   /// Stream of active alerts (real-time), ordered by timestamp descending.
-  ///
-  /// When Firebase is not configured, returns an empty stream (no mock data).
   Stream<List<SmartAlert>> alertsStream() {
-    if (_fs == null) {
-      return Stream.value(const <SmartAlert>[]);
-    }
-    return _fs!
-        .collection('alerts')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => SmartAlert.fromFirestore(doc))
-              .toList(),
-        );
+    return supabase
+        .from('alerts')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((rows) => rows.map((row) => SmartAlert.fromSupabase(row)).toList());
   }
 
   /// Get all active alerts (one-shot).
-  ///
-  /// When Firebase is not configured, returns an empty list (no mock data).
   Future<List<SmartAlert>> getAlerts({int limit = 50}) async {
-    if (_fs == null) return const <SmartAlert>[];
-    final snapshot = await _fs!
-        .collection('alerts')
-        .orderBy('timestamp', descending: true)
-        .limit(limit)
-        .get();
-    return snapshot.docs.map((doc) => SmartAlert.fromFirestore(doc)).toList();
+    final response = await supabase
+        .from('alerts')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return response.map((row) => SmartAlert.fromSupabase(row)).toList();
   }
 
   /// Get alerts by severity.
-  ///
-  /// When Firebase is not configured, returns an empty list (no mock data).
   Future<List<SmartAlert>> getAlertsBySeverity(String severity) async {
-    if (_fs == null) return const <SmartAlert>[];
-    final snapshot = await _fs!
-        .collection('alerts')
-        .where('severity', isEqualTo: severity)
-        .orderBy('timestamp', descending: true)
-        .get();
-    return snapshot.docs.map((doc) => SmartAlert.fromFirestore(doc)).toList();
+    final response = await supabase
+        .from('alerts')
+        .select()
+        .eq('severity', severity)
+        .order('created_at', ascending: false);
+    return response.map((row) => SmartAlert.fromSupabase(row)).toList();
   }
 
   Future<String> createAlert({
@@ -63,49 +39,40 @@ class AlertService {
     required String sensorId,
     required String location,
   }) async {
-    if (_fs == null) {
-      throw StateError('Firebase non configuré');
-    }
-
-    final docRef = await _fs!.collection('alerts').add({
+    final response = await supabase.from('alerts').insert({
       'title': title,
       'description': description,
       'severity': severity,
-      'sensorId': sensorId,
+      'sensor_id': sensorId,
       'location': location,
-      'timestamp': FieldValue.serverTimestamp(),
       'acknowledged': false,
       'resolved': false,
-    });
-    return docRef.id;
+    }).select('id').single();
+    return response['id'] as String;
   }
 
   Future<void> acknowledgeAlert(String alertId) async {
-    if (_fs == null) return;
-    await _fs!.collection('alerts').doc(alertId).update({
+    await supabase.from('alerts').update({
       'acknowledged': true,
-      'acknowledgedAt': FieldValue.serverTimestamp(),
-    });
+      'acknowledged_at': DateTime.now().toIso8601String(),
+    }).eq('id', alertId);
   }
 
   Future<void> resolveAlert(String alertId) async {
-    if (_fs == null) return;
-    await _fs!.collection('alerts').doc(alertId).update({
+    await supabase.from('alerts').update({
       'resolved': true,
-      'resolvedAt': FieldValue.serverTimestamp(),
-    });
+      'resolved_at': DateTime.now().toIso8601String(),
+    }).eq('id', alertId);
   }
 
   Future<Map<String, int>> getAlertCounts() async {
-    if (_fs == null) return {'critical': 0, 'warning': 0, 'info': 0};
-
-    final snapshot = await _fs!
-        .collection('alerts')
-        .where('resolved', isEqualTo: false)
-        .get();
+    final response = await supabase
+        .from('alerts')
+        .select('severity')
+        .eq('resolved', false);
     int critical = 0, warning = 0, info = 0;
-    for (final doc in snapshot.docs) {
-      final severity = doc['severity'] as String?;
+    for (final row in response) {
+      final severity = row['severity'] as String?;
       if (severity == 'critical') {
         critical++;
       } else if (severity == 'warning') {
@@ -123,90 +90,59 @@ class AlertService {
     required double methane,
     required double slurryLevel,
   }) async {
-    if (_fs == null) {
-      // no Firebase: do not generate mock alerts
-      return;
-    }
-
     if (temperature > 40) {
       await createAlert(
         title: 'Température critique: ${temperature.toStringAsFixed(1)}°C',
         description: 'La température a dépassé le seuil maximum de 40°C.',
-        severity: 'critical',
-        sensorId: 'DS18B20',
-        location: 'Chambre principale',
-      );
+        severity: 'critical', sensorId: 'DS18B20', location: 'Chambre principale');
     } else if (temperature < 25) {
       await createAlert(
         title: 'Température basse: ${temperature.toStringAsFixed(1)}°C',
         description: 'La température est en dessous du seuil minimum de 25°C.',
-        severity: 'warning',
-        sensorId: 'DS18B20',
-        location: 'Chambre principale',
-      );
+        severity: 'warning', sensorId: 'DS18B20', location: 'Chambre principale');
     }
     if (pressure > 1.5) {
       await createAlert(
         title: 'Pression critique: ${pressure.toStringAsFixed(2)} bar',
-        description:
-            'La pression a dépassé 1.5 bar. Soupape de sécurité activée.',
-        severity: 'critical',
-        sensorId: 'BMP280',
-        location: 'Biodigesteur principal',
-      );
+        description: 'La pression a dépassé 1.5 bar. Soupape de sécurité activée.',
+        severity: 'critical', sensorId: 'BMP280', location: 'Biodigesteur principal');
     } else if (pressure < 0.8) {
       await createAlert(
         title: 'Pression basse: ${pressure.toStringAsFixed(2)} bar',
         description: 'La pression est en dessous de 0.8 bar.',
-        severity: 'warning',
-        sensorId: 'BMP280',
-        location: 'Biodigesteur principal',
-      );
+        severity: 'warning', sensorId: 'BMP280', location: 'Biodigesteur principal');
     }
     if (methane > 500) {
       await createAlert(
         title: 'Méthane élevé: ${methane.toStringAsFixed(0)} ppm',
-        description:
-            'Concentration de méthane au-dessus de 500 ppm. Risque de fuite.',
-        severity: 'critical',
-        sensorId: 'MQ-4',
-        location: 'Dôme de gaz',
-      );
+        description: 'Concentration de méthane au-dessus de 500 ppm. Risque de fuite.',
+        severity: 'critical', sensorId: 'MQ-4', location: 'Dôme de gaz');
     } else if (methane < 150) {
       await createAlert(
         title: 'Méthane bas: ${methane.toStringAsFixed(0)} ppm',
         description: 'Production de méthane insuffisante.',
-        severity: 'warning',
-        sensorId: 'MQ-4',
-        location: 'Dôme de gaz',
-      );
+        severity: 'warning', sensorId: 'MQ-4', location: 'Dôme de gaz');
     }
     if (slurryLevel > 90) {
       await createAlert(
         title: 'Niveau de lisier critique: ${slurryLevel.toStringAsFixed(1)}%',
         description: 'Le niveau de lisier dépasse 90%. Vidange nécessaire.',
-        severity: 'critical',
-        sensorId: 'HC-SR04',
-        location: 'Sortie de lisier',
-      );
+        severity: 'critical', sensorId: 'HC-SR04', location: 'Sortie de lisier');
     } else if (slurryLevel < 20) {
       await createAlert(
         title: 'Niveau de lisier bas: ${slurryLevel.toStringAsFixed(1)}%',
         description: 'Le niveau de lisier est en dessous de 20%.',
-        severity: 'warning',
-        sensorId: 'HC-SR04',
-        location: 'Sortie de lisier',
-      );
+        severity: 'warning', sensorId: 'HC-SR04', location: 'Sortie de lisier');
     }
   }
 }
 
-/// Firestore-backed smart alert model.
+/// Supabase-backed smart alert model.
 class SmartAlert {
   final String id;
   final String title;
   final String description;
-  final String severity; // critical, warning, info
+  final String severity;
   final String sensorId;
   final String location;
   final DateTime? timestamp;
@@ -225,24 +161,17 @@ class SmartAlert {
     this.resolved = false,
   });
 
-  factory SmartAlert.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    DateTime? ts;
-    final rawTs = data['timestamp'];
-    if (rawTs is Timestamp) {
-      ts = rawTs.toDate();
-    } else if (rawTs is String) {
-      ts = DateTime.tryParse(rawTs);
-    }
-
+  factory SmartAlert.fromSupabase(Map<String, dynamic> data) {
     return SmartAlert(
-      id: doc.id,
-      title: data['title'] ?? '',
-      description: data['description'] ?? '',
-      severity: data['severity'] ?? 'info',
-      sensorId: data['sensorId'] ?? '',
-      location: data['location'] ?? '',
-      timestamp: ts,
+      id: data['id']?.toString() ?? '',
+      title: data['title']?.toString() ?? '',
+      description: data['description']?.toString() ?? '',
+      severity: data['severity']?.toString() ?? 'info',
+      sensorId: data['sensor_id']?.toString() ?? '',
+      location: data['location']?.toString() ?? '',
+      timestamp: data['created_at'] != null
+          ? DateTime.tryParse(data['created_at'].toString())
+          : null,
       acknowledged: data['acknowledged'] == true,
       resolved: data['resolved'] == true,
     );

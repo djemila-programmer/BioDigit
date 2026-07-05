@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
@@ -12,400 +13,310 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String _selectedRole = 'user';
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  AppTheme.primary.withValues(alpha: 0.4),
-                  AppTheme.background,
-                ],
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.containerPadding,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Brand Identity
-                    const SizedBox(height: 32),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.eco,
-                        color: AppTheme.onPrimary,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'BioDigit',
-                      style: TextStyle(
-                        fontSize: 28,
-                        height: 36 / 28,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primary,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Smart Biodigester Monitoring — Burkina Faso',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppTheme.onSurface.withValues(alpha: 0.9),
-                      ),
-                    ),
-                    const SizedBox(height: AppTheme.sectionMargin),
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-                    // Login Card
-                    Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              fontSize: 22,
-                              height: 28 / 22,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (_formKey.currentState?.validate() != true) return;
 
-                          // Email Field
-                          TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              labelText: 'Email Address',
-                              prefixIcon: Icon(Icons.email_outlined),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+    final auth = context.read<AuthProvider>();
+    final success = await auth.signIn(
+      _emailController.text.trim(),
+      _passwordController.text,
+      expectedRole: _selectedRole,
+    );
 
-                          // Password Field
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  size: 20,
-                                ),
-                                onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Role selector
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedRole,
-                              decoration: const InputDecoration(
-                                labelText: 'Login as',
-                                prefixIcon: Icon(
-                                  Icons.admin_panel_settings_outlined,
-                                ),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'user',
-                                  child: Text('USER'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'admin',
-                                  child: Text('ADMIN'),
-                                ),
-                              ],
-                              onChanged: (v) {
-                                if (v == null) return;
-                                setState(() => _selectedRole = v);
-                              },
-                            ),
-                          ),
-
-                          // Forgot Password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {},
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Error message
-                          Consumer<AuthProvider>(
-                            builder: (_, auth, __) {
-                              if (auth.error != null) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: Text(
-                                    auth.error!,
-                                    style: const TextStyle(
-                                      color: AppTheme.error,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
-
-                          // Sign In Button
-                          Consumer<AuthProvider>(
-                            builder: (ctx, auth, __) {
-                              return SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: auth.isLoading
-                                      ? null
-                                      : () async {
-                                          final success = await auth.signIn(
-                                            _emailController.text.trim(),
-                                            _passwordController.text,
-                                            expectedRole: _selectedRole,
-                                          );
-
-                                          if (success && ctx.mounted) {
-                                            final role =
-                                                auth.user?.role ?? 'user';
-                                            if (role == 'admin') {
-                                              Navigator.pushReplacementNamed(
-                                                ctx,
-                                                AppRoutes.adminDashboard,
-                                              );
-                                            } else {
-                                              Navigator.pushReplacementNamed(
-                                                ctx,
-                                                AppRoutes.mainDashboard,
-                                              );
-                                            }
-                                          }
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  child: auth.isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Text('Sign In'),
-                                            const SizedBox(width: 8),
-                                            const Icon(
-                                              Icons.arrow_forward,
-                                              size: 18,
-                                            ),
-                                          ],
-                                        ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Divider
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(color: AppTheme.outlineVariant),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: Text(
-                                  'or continue with',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.onSurfaceVariant,
-                                    letterSpacing: 0.5,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(color: AppTheme.outlineVariant),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Social Login Buttons
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () {},
-                                  icon: const Icon(
-                                    Icons.g_mobiledata,
-                                    size: 20,
-                                  ),
-                                  label: const Text('Google'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () {},
-                                  icon: const Icon(
-                                    Icons.facebook,
-                                    size: 20,
-                                    color: Color(0xFF1877F2),
-                                  ),
-                                  label: const Text('Facebook'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Sign Up Link
-                          Center(
-                            child: GestureDetector(
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.register,
-                              ),
-                              child: Text.rich(
-                                TextSpan(
-                                  text: "Don't have an account? ",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.onSurfaceVariant,
-                                  ),
-                                  children: const [
-                                    TextSpan(
-                                      text: 'Sign Up',
-                                      style: TextStyle(
-                                        color: AppTheme.primary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Footer
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _footerLink('Privacy Policy'),
-                        const SizedBox(width: 16),
-                        _footerLink('Terms of Service'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '© 2024 BioSmart Africa • Plateau Central, Burkina Faso',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    if (!success || !mounted) return;
+    final role = auth.user?.role ?? 'user';
+    Navigator.pushReplacementNamed(
+      context,
+      role == 'admin' ? AppRoutes.adminDashboard : AppRoutes.mainDashboard,
     );
   }
 
-  Widget _footerLink(String text) {
-    return TextButton(
-      onPressed: () {},
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          color: AppTheme.onSurface.withValues(alpha: 0.7),
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              AppTheme.primary.withValues(alpha: 0.20),
+              cs.surface,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.containerPadding, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                    border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(Icons.eco, color: AppTheme.onPrimary, size: 30),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'BioDigit',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.primary,
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Plateforme de supervision des biodigesteurs',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Connexion sécurisée',
+                          style: TextStyle(
+                            fontSize: 24,
+                            height: 30 / 24,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Accédez à votre tableau de bord, à vos alertes et à vos indicateurs en temps réel.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: cs.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Email requis';
+                            if (!v.contains('@') || !v.contains('.')) return 'Email invalide';
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Adresse email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Mot de passe requis';
+                            if (v.length < 6) return 'Min. 6 caractères';
+                            return null;
+                          },
+                          onFieldSubmitted: (_) => _submit(),
+                          decoration: InputDecoration(
+                            labelText: 'Mot de passe',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: _selectedRole,
+                          decoration: const InputDecoration(
+                            labelText: 'Se connecter en tant que',
+                            prefixIcon: Icon(Icons.admin_panel_settings_outlined),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'user', child: Text('Utilisateur')),
+                            DropdownMenuItem(value: 'admin', child: Text('Administrateur')),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _selectedRole = value);
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.pushNamed(context, AppRoutes.forgotPassword),
+                            child: const Text('Mot de passe oublié ?'),
+                          ),
+                        ),
+                        Consumer<AuthProvider>(
+                          builder: (_, auth, __) {
+                            if (auth.error == null) return const SizedBox.shrink();
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.errorContainer.withValues(alpha: 0.55),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.error.withValues(alpha: 0.18)),
+                                ),
+                                child: Text(
+                                  auth.error!,
+                                  style: const TextStyle(color: AppTheme.error, fontSize: 13),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Consumer<AuthProvider>(
+                          builder: (ctx, auth, __) {
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: auth.isLoading ? null : _submit,
+                                icon: auth.isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Icon(Icons.arrow_forward),
+                                label: Text(auth.isLoading ? 'Connexion...' : 'Se connecter'),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: cs.outlineVariant)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'ou continuer avec',
+                                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant.withValues(alpha: 0.9), letterSpacing: 0.5),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: cs.outlineVariant)),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        // Google Sign-In only on mobile platforms
+                        if (Platform.isAndroid || Platform.isIOS)
+                          Consumer<AuthProvider>(
+                            builder: (ctx, auth, __) {
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: auth.isLoading
+                                          ? null
+                                          : () async {
+                                              final success = await auth.signInWithGoogle(expectedRole: _selectedRole);
+                                              if (!success || !ctx.mounted) return;
+                                              final role = auth.user?.role ?? 'user';
+                                              Navigator.pushReplacementNamed(
+                                                ctx,
+                                                role == 'admin' ? AppRoutes.adminDashboard : AppRoutes.mainDashboard,
+                                              );
+                                            },
+                                      icon: const Icon(Icons.g_mobiledata, size: 20),
+                                      label: const Text('Google'),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: GestureDetector(
+                            onTap: () => Navigator.pushNamed(context, AppRoutes.register),
+                            child: Text.rich(
+                              TextSpan(
+                                text: "Pas encore de compte ? ",
+                                style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                                children: const [
+                                  TextSpan(
+                                    text: 'Créer un compte',
+                                    style: TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
+
 }
