@@ -1,159 +1,133 @@
 /*
- * GUIDE DE CABLAGE - BioDigit ESP32
- * ====================================
+ * GUIDE DE CABLAGE - BioDigit ESP8266 + DHT22
+ * ==============================================
  * 
- * MATÉRIEL NÉCESSAIRE :
- * ---------------------
- * 1x ESP32 DevKit V1 (30 broches)
- * 1x DS18B20 (capteur température) + résistance 4.7kΩ
+ * MATÉRIEL :
+ * ----------
+ * 1x ESP8266 (NodeMCU ou Wemos D1 Mini)
+ * 1x DHT22 (capteur température + humidité)
  * 1x BMP280 (capteur pression I2C)
  * 1x MQ-4 (capteur gaz méthane)
  * 1x HC-SR04 (capteur ultrason)
  * 1x Breadboard 400+ points
  * Fils jumper mâle-mâle et mâle-femelle
  * 1x Câble USB Micro-USB
- * 1x Alimentation 5V 2A (ou port USB PC)
  * 
  * ALIMENTATION :
  * --------------
- * ESP32     → 3.3V (via USB ou regulateur)
- * DS18B20   → 3.3V (VDD) + GND
- * BMP280    → 3.3V (VIN) + GND
- * MQ-4      → 5V (VCC) + GND  (ATTENTION: 5V requis!)
- * HC-SR04   → 5V (VCC) + GND  (ATTENTION: 5V requis!)
+ * ESP8266   → 5V via USB (régulé en 3.3V interne)
+ * DHT22     → 3.3V ou 5V + GND
+ * BMP280    → 3.3V + GND
+ * MQ-4      → 5V + GND  (ATTENTION: 5V requis!)
+ * HC-SR04   → 5V + GND  (ATTENTION: 5V requis!)
  * 
  * ═══════════════════════════════════════════════════════════════
- * SCHÉMA DE CÂBLAGE DÉTAILLÉ
+ * SCHÉMA DE CÂBLAGE - ESP8266 NodeMCU
  * ═══════════════════════════════════════════════════════════════
  * 
- * ┌─────────────────────────────────────────────────────────────────┐
- * │                         ESP32 DevKit                             │
- * │                                                                  │
- * │  3V3 ──────┬──────────────────────────────────┐                 │
- * │             │                                  │                 │
- * │  GND ───────┼──────────────────────────────────┼──────────┐      │
- * │             │                                  │          │      │
- * │  GPIO4 ─────┤ DS18B20 (Data)                   │          │      │
- * │             │   └── Résistance 4.7kΩ ── 3V3    │          │      │
- * │             │                                  │          │      │
- * │  GPIO21 ────┤ BMP280 (SDA)                     │          │      │
- * │  GPIO22 ────┤ BMP280 (SCL)                     │          │      │
- * │             │                                  │          │      │
- * │  GPIO34 ────┤ MQ-4 (AOUT - sortie analogique) │          │      │
- * │             │                                  │          │      │
- * │  GPIO5 ─────┤ HC-SR04 (Trig)                   │          │      │
- * │  GPIO18 ────┤ HC-SR04 (Echo)                   │          │      │
- * │             │                                  │          │      │
- * │  5V (VIN) ──┼──────────────────────────────────┼──────────┘      │
- * │             │                                  │                 │
- * └─────────────┴──────────────────────────────────┴─────────────────┘
+ * ESP8266 NodeMCU Pinout :
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  3V3 ──── DHT22 VCC, BMP280 VCC                            │
+ * │  GND ─── Tous les GND                                      │
+ * │  D1 (GPIO 5)  ── BMP280 SCL                                 │
+ * │  D2 (GPIO 4)  ── DHT22 DATA, BMP280 SDA                    │
+ * │  D5 (GPIO 14) ── HC-SR04 Trig                               │
+ * │  D6 (GPIO 12) ── HC-SR04 Echo                               │
+ *  │  A0           ── MQ-4 AOUT (direct)                      │
+ * │  Vin (5V)    ── MQ-4 VCC, HC-SR04 VCC                      │
+ * └─────────────────────────────────────────────────────────────┘
  * 
  * ═══════════════════════════════════════════════════════════════
  * CÂBLAGE PAR CAPTEUR
  * ═══════════════════════════════════════════════════════════════
  * 
  * ┌─────────────────────────────────────────────────────────────┐
- * │ 1. DS18B20 - CAPTEUR TEMPÉRATURE                            │
+ * │ 1. DHT22 - TEMPÉRATURE + HUMIDITÉ                           │
  * │                                                             │
- * │  DS18B20        ESP32                                       │
- * │  ─────────      ─────                                       │
- * │  VCC (rouge) →  3V3                                         │
+ * │  DHT22          ESP8266                                     │
+ * │  ─────          ───────                                      │
+ * │  VCC (rouge) →  3V3 (ou Vin 5V)                             │
  * │  GND (noir)  →  GND                                         │
- * │  DATA(jaune) →  GPIO 4                                      │
+ * │  DATA (jaune)→  D2 (GPIO 4)                                 │
  * │                                                             │
- * │  ⚠️ Résistance 4.7kΩ entre VCC et DATA (obligatoire!)      │
- * │                                                             │
- * │  [3V3] ──── [4.7kΩ] ──── [GPIO4/DATA]                     │
- * │                                                             │
- * └─────────────────────────────────────────────────────────────┘
- * 
- * ┌─────────────────────────────────────────────────────────────┐
- * │ 2. BMP280 - CAPTEUR PRESSION (I2C)                          │
- * │                                                             │
- * │  BMP280         ESP32                                       │
- * │  ────────        ─────                                       │
- * │  VIN    →  3V3                                               │
- * │  GND    →  GND                                               │
- * │  SCL    →  GPIO 22                                           │
- * │  SDA    →  GPIO 21                                           │
- * │                                                             │
- * │  ⚠️ Adresse I2C par défaut: 0x76                             │
- * │  ⚠️ Si module a 6 broches, vérifier SDO (0x76 ou 0x77)      │
+ * │  Pas de résistance nécessaire avec le module DHT22          │
+ * │  (résistance pull-up intégrée sur le module)                │
  * │                                                             │
  * └─────────────────────────────────────────────────────────────┘
  * 
  * ┌─────────────────────────────────────────────────────────────┐
- * │ 3. MQ-4 - CAPTEUR GAZ MÉTHANE                               │
+ * │ 2. BMP280 - PRESSION (I2C)                                  │
  * │                                                             │
- * │  MQ-4           ESP32                                       │
- * │  ────            ─────                                       │
- * │  VCC    →  5V (VIN)    ⚠️ 5V REQUIS!                       │
- * │  GND    →  GND                                               │
- * │  AOUT   →  GPIO 34    (sortie analogique)                   │
- * │  DOUT   →  non utilisé                                      │
+ * │  BMP280         ESP8266                                     │
+ * │  ────────        ───────                                     │
+ * │  VIN/VCC  →  3V3                                            │
+ * │  GND      →  GND                                            │
+ * │  SCL      →  D1 (GPIO 5)                                    │
+ * │  SDA      →  D2 (GPIO 4)                                    │
  * │                                                             │
- * │  ⚠️ Chauffer 24h avant première utilisation                  │
- * │  ⚠️ Consomme ~800mA pendant chauffage                       │
+ * │  Adresse I2C : 0x76 (défaut) ou 0x77                        │
+ * │  Le code teste les deux adresses automatiquement            │
  * │                                                             │
  * └─────────────────────────────────────────────────────────────┘
  * 
  * ┌─────────────────────────────────────────────────────────────┐
- * │ 4. HC-SR04 - CAPTEUR ULTRASON (NIVEAU)                      │
+ * │ 3. MQ-4 - GAZ MÉTHANE                                       │
  * │                                                             │
- * │  HC-SR04        ESP32                                       │
- * │  ─────────       ─────                                       │
- * │  VCC    →  5V (VIN)    ⚠️ 5V REQUIS!                       │
- * │  GND    →  GND                                               │
- * │  Trig   →  GPIO 5                                            │
- * │  Echo   →  GPIO 18   ⚠️ Diviseur de tension recommandé!     │
+ * │  MQ-4           ESP8266                                     │
+ * │  ────            ───────                                     │
+ * │  VCC    →  Vin (5V)    ⚠️ 5V REQUIS!                        │
+ * │  GND    →  GND                                              │
+ * │  AOUT   →  A0 (connexion directe)                           │
  * │                                                             │
- * │  ⚠️ Echo sort 5V, GPIO18 accepte 3.3V max                   │
- * │  ⚠️ Utiliser diviseur: Echo → [1kΩ] → GPIO18               │
- * │                                     → [2kΩ] → GND           │
+ * │  ⚠️ Mode simulation : pas de diviseur de tension nécessaire │
+ * │  Le code calibre la lecture software                        │
+ * │  ️ Chauffer 24h avant première utilisation                 │
+ * │                                                             │
+ * │  Schéma :                                                   │
+ * │  MQ-4 AOUT ──────────→ A0 (ESP8266)                        │
+ * │                                                             │
+ * └─────────────────────────────────────────────────────────────┘
+ * 
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │ 4. HC-SR04 - NIVEAU ULTRASON                                │
+ * │                                                             │
+ * │  HC-SR04        ESP8266                                     │
+ * │  ─────────       ───────                                     │
+ * │  VCC    →  Vin (5V)                                         │
+ * │  GND    →  GND                                              │
+ * │  Trig   →  D5 (GPIO 14)                                     │
+ * │  Echo   →  D6 (GPIO 12)                                     │
+ * │                                                             │
+ * │  ✅ Pas de diviseur nécessaire en mode simulation          │
  * │                                                             │
  * └─────────────────────────────────────────────────────────────┘
  * 
  * ═══════════════════════════════════════════════════════════════
- * DIVISEUR DE TENSION POUR HC-SR04 ECHO (IMPORTANT!)
- * ═══════════════════════════════════════════════════════════════
- * 
- * Le HC-SR04 Echo sort 5V. L'ESP32 GPIO accepte 3.3V max.
- * Sans diviseur, vous RISQUEZ d'endommager l'ESP32!
- * 
- * Schéma diviseur :
- * 
- *   HC-SR04 Echo ──── [1kΩ] ────┬──── GPIO 18 (ESP32)
- *                                │
- *                              [2kΩ]
- *                                │
- *                               GND
- * 
- * Ratio: 5V × (2k/(1k+2k)) = 3.3V ✓
- * 
- * ═══════════════════════════════════════════════════════════════
- * INSTALLATION DANS L'ARDUINO IDE
+ * INSTALLATION ARDUINO IDE
  * ═══════════════════════════════════════════════════════════════
  * 
  * 1. Installer Arduino IDE : https://www.arduino.cc/en/software
  * 
- * 2. Ajouter le support ESP32 :
+ * 2. Ajouter le support ESP8266 :
  *    - Fichier → Préférences
  *    - URL de gestionnaire de cartes :
- *      https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+ *      http://arduino.esp8266.com/stable/package_esp8266com_index.json
  *    - Outils → Type de carte → Gestionnaire de cartes
- *    - Chercher "ESP32" et installer "esp32 by Espressif"
+ *    - Chercher "ESP8266" et installer "esp8266 by ESP8266 Community"
  * 
  * 3. Installer les bibliothèques :
  *    - Croquis → Inclure bibliothèque → Gérer les bibliothèques
  *    - Installer :
- *      • "OneWire" par Paul Stoffregen
- *      • "DallasTemperature" by Miles Burton
+ *      • "DHT sensor library" by Adafruit
  *      • "Adafruit BMP280 Library" by Adafruit
  *      • "ArduinoJson" by Benoit Blanchon
+ *      • "ESP8266WiFi" (inclus dans le package ESP8266)
+ *      • "ESP8266HTTPClient" (inclus dans le package ESP8266)
  * 
  * 4. Sélectionner la carte :
- *    - Outils → Type de carte → ESP32 Dev Module
+ *    - Outils → Type de carte → NodeMCU 1.0 (ESP-12E Module)
  *    - Port : COMx (choisir le bon port)
+ *    - Upload Speed : 115200
  * 
  * 5. Modifier les valeurs dans biodigit_esp32.ino :
  *    - WIFI_SSID et WIFI_PASSWORD
@@ -162,14 +136,14 @@
  * 
  * 6. Téléverser : bouton "Téléverser" (flèche)
  * 
- * ═══════════════════════════════════════════════════════════════
+ * ══════════════════════════════════════════════════════════════
  * TROUVER L'USER_ID DANS SUPABASE
  * ═══════════════════════════════════════════════════════════════
  * 
- * 1. Aller sur Supabase Dashboard → votre projet
+ * 1. Supabase Dashboard → votre projet
  * 2. Authentication → Users
  * 3. Cliquer sur l'utilisateur
- * 4. Copier l'UUID (ex: "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+ * 4. Copier l'UID (ex: "efbdcbf0-d9fc-4537-882f-80a8c951f9b2")
  * 5. Coller dans USER_ID dans le code
  * 
  * ═══════════════════════════════════════════════════════════════
@@ -178,14 +152,14 @@
  * 
  * 1. Ouvrir le Moniteur Série (115200 bauds)
  * 2. Vous devriez voir :
- *    === BioDigit ESP32 ===
- *    [OK] DS18B20 initialise
- *    [OK] BMP280 initialise
+ *    === BioDigit ESP8266 + DHT22 ===
+ *    [OK] DHT22 initialise
+ *    [OK] BMP280 initialise (adresse 0x76)
  *    Connexion WiFi: VOTRE_WIFI.....
  *    [OK] WiFi connecte!
  *      IP: 192.168.1.xxx
  *    Temp: 36.5°C | Press: 1.05 bar | CH4: 320 ppm | Niveau: 72.5%
- *      [OK] Donnees envoyees a Supabase
+ *      [OK] Envoye a Supabase
  * 
  * 3. Vérifier dans Supabase :
  *    - Table Editor → sensor_readings
@@ -200,22 +174,23 @@
  * ═══════════════════════════════════════════════════════════════
  * 
  * "BMP280 non trouve"
- *   → Vérifier câblage I2C (SDA=21, SCL=22)
+ *   → Vérifier câblage I2C (SDA=D2, SCL=D1)
  *   → Vérifier adresse (0x76 ou 0x77)
  *   → Vérifier alimentation 3.3V
  * 
- * "Température = -127°C"
- *   → Vérifier résistance 4.7kΩ entre VCC et DATA
- *   → Vérifier broche DATA sur GPIO 4
+ * "DHT22 lecture NaN"
+ *   → Vérifier broche DATA sur D2
+ *   → Vérifier alimentation (3.3V ou 5V)
+ *   → Attendre 2s entre les lectures
  * 
  * "MQ-4 ne lit rien"
  *   → Attendre 24h de préchauffage
  *   → Vérifier alimentation 5V
- *   → Vérifier AOUT sur GPIO 34
+ *   → Vérifier connexion AOUT → A0
  * 
  * "WiFi echec"
  *   → Vérifier SSID et mot de passe
- *   → WiFi 2.4GHz uniquement (ESP32 ne supporte pas 5GHz)
+ *   → WiFi 2.4GHz uniquement (ESP8266 ne supporte pas 5GHz)
  * 
  * "HTTP 401"
  *   → Vérifier SUPABASE_ANON_KEY

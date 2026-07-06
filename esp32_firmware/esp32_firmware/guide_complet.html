@@ -97,8 +97,17 @@
 </head>
 <body>
 
-<h1>🌿 BioDigit - Guide Complet de Branchement</h1>
-<p class="subtitle">ESP32 + Capteurs → Supabase → Application Flutter</p>
+<h1>🌿 BioDigit - Guide de Simulation IoT</h1>
+<p class="subtitle">ESP8266 + DHT22 → Supabase → Application Flutter</p>
+
+<div style="background:#1b3a1b; border:2px solid #4caf50; border-radius:12px; padding:20px; margin:20px 0;">
+  <h3 style="color:#4caf50; margin-bottom:10px;">🎯 Objectif de ce guide</h3>
+  <p style="font-size:14px; line-height:1.6;">
+    Ce guide vous permet de <b>tester l'application BioDigit sans biodigesteur réel</b>.<br>
+    Vous brancherez 4 capteurs sur un ESP8266 et simulerez les conditions d'un biodigesteur avec des objets du quotidien.<br>
+    <b>Budget total : ~21 000 FCFA</b> (disponible au Burkina Faso, sans résistance)
+  </p>
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <h2>📐 Architecture du Système</h2>
@@ -107,17 +116,17 @@
   <!-- Background -->
   <rect width="900" height="280" fill="#0f1f0f" rx="12"/>
   
-  <!-- ESP32 Box -->
+  <!-- ESP8266 Box -->
   <rect x="20" y="40" width="220" height="200" rx="12" fill="#1a2e1a" stroke="#ff9800" stroke-width="2"/>
-  <text x="130" y="70" text-anchor="middle" fill="#ffb74d" font-size="14" font-weight="bold">🔌 ESP32 + Capteurs</text>
+  <text x="130" y="70" text-anchor="middle" fill="#ffb74d" font-size="14" font-weight="bold">🔌 ESP8266 + Capteurs</text>
   <rect x="40" y="90" width="180" height="28" rx="6" fill="#263238"/>
-  <text x="130" y="109" text-anchor="middle" fill="#ef5350" font-size="11">🌡️ DS18B20 → GPIO 4</text>
+  <text x="130" y="109" text-anchor="middle" fill="#ef5350" font-size="11">🌡️ DHT22 → D2 (GPIO 4)</text>
   <rect x="40" y="125" width="180" height="28" rx="6" fill="#263238"/>
-  <text x="130" y="144" text-anchor="middle" fill="#42a5f5" font-size="11">📊 BMP280 → GPIO 21,22</text>
+  <text x="130" y="144" text-anchor="middle" fill="#42a5f5" font-size="11">📊 BMP280 → D1/D2 (I2C)</text>
   <rect x="40" y="160" width="180" height="28" rx="6" fill="#263238"/>
-  <text x="130" y="179" text-anchor="middle" fill="#ff9800" font-size="11">💨 MQ-4 → GPIO 34</text>
+  <text x="130" y="179" text-anchor="middle" fill="#ff9800" font-size="11">💨 MQ-4 → A0 (direct)</text>
   <rect x="40" y="195" width="180" height="28" rx="6" fill="#263238"/>
-  <text x="130" y="214" text-anchor="middle" fill="#ab47bc" font-size="11">📏 HC-SR04 → GPIO 5,18</text>
+  <text x="130" y="214" text-anchor="middle" fill="#ab47bc" font-size="11">📏 HC-SR04 → D5/D6</text>
   
   <!-- Arrow 1 -->
   <line x1="245" y1="140" x2="310" y2="140" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
@@ -162,21 +171,114 @@
 </svg>
 
 <!-- ═══════════════════════════════════════════ -->
-<h2>🔧 Matériel Nécessaire</h2>
+<h2>🛒 Liste d'Achat (en FCFA)</h2>
+
+<div style="background:#1b3a1b; border:1px solid #4caf50; border-radius:8px; padding:12px; margin:10px 0;">
+  <b style="color:#4caf50;">💰 Budget total : ~21 000 FCFA</b> — Tout disponible au Burkina Faso ou sur AliExpress (sans résistance)
+</div>
 
 <table class="pin-table">
-  <tr><th>Composant</th><th>Modèle</th><th>Rôle</th><th>Alimentation</th><th>Prix ~</th></tr>
-  <tr><td>Microcontrôleur</td><td>ESP32 DevKit V1</td><td>WiFi + GPIO</td><td>USB 5V</td><td>8€</td></tr>
-  <tr><td>Température</td><td>DS18B20</td><td>Temp. bouillie</td><td>3.3V</td><td>3€</td></tr>
-  <tr><td>Pression</td><td>BMP280</td><td>Pression interne</td><td>3.3V</td><td>5€</td></tr>
-  <tr><td>Gaz méthane</td><td>MQ-4</td><td>Concentration CH4</td><td><b>5V</b></td><td>4€</td></tr>
-  <tr><td>Niveau</td><td>HC-SR04</td><td>Niveau bouillie</td><td><b>5V</b></td><td>2€</td></tr>
-  <tr><td>Prototypage</td><td>Breadboard 400pts</td><td>Connexions</td><td>-</td><td>3€</td></tr>
-  <tr><td>Fils</td><td>Jumper wires 40pcs</td><td>Connexions</td><td>-</td><td>2€</td></tr>
-  <tr><td>Résistance</td><td>4.7kΩ (pour DS18B20)</td><td>Pull-up</td><td>-</td><td>0.5€</td></tr>
-  <tr><td>Résistances</td><td>1kΩ + 2kΩ (pour HC-SR04)</td><td>Diviseur tension</td><td>-</td><td>0.5€</td></tr>
-  <tr><td>Câble</td><td>USB Micro-USB</td><td>Alimentation</td><td>-</td><td>2€</td></tr>
+  <tr><th>#</th><th>Composant</th><th>Modèle</th><th>Qté</th><th>Prix FCFA</th></tr>
+  <tr><td>1</td><td>Microcontrôleur WiFi</td><td>ESP8266 NodeMCU</td><td>1</td><td>3 500 F</td></tr>
+  <tr><td>2</td><td>Capteur température</td><td>DHT22 (temp + humidité)</td><td>1</td><td>3 500 F</td></tr>
+  <tr><td>3</td><td>Capteur pression</td><td>BMP280 (I2C)</td><td>1</td><td>3 500 F</td></tr>
+  <tr><td>4</td><td>Capteur gaz méthane</td><td>MQ-4</td><td>1</td><td>2 500 F</td></tr>
+  <tr><td>5</td><td>Capteur ultrason</td><td>HC-SR04</td><td>1</td><td>1 500 F</td></tr>
+  <tr><td>6</td><td>Plaque de prototypage</td><td>Breadboard 400pts</td><td>1</td><td>2 000 F</td></tr>
+  <tr><td>7</td><td>Fils de connexion</td><td>Jumper wires 40pcs</td><td>1</td><td>1 500 F</td></tr>
+  <tr><td>8</td><td>Câble USB</td><td>Micro-USB 1m</td><td>1</td><td>2 000 F</td></tr>
+  <tr><td>9</td><td>Chargeur</td><td>5V 2A</td><td>1</td><td>3 500 F</td></tr>
 </table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>🧪 Simulation Sans Biodigesteur Réel</h2>
+
+<div style="background:#1a2e1a; border-radius:12px; padding:20px; margin:20px 0;">
+  <h3 style="color:#ffb74d; margin-bottom:15px;">Comment simuler les conditions d'un biodigesteur</h3>
+  
+  <div class="wiring-grid">
+    <div class="sensor-card temp">
+      <h3>🌡️ Température (DHT22)</h3>
+      <p style="font-size:13px; line-height:1.6;">
+        <b>Simuler avec :</b><br>
+        • Verre d'eau chaude (35-40°C) → zone optimale<br>
+        • Verre d'eau froide (25°C) → zone basse<br>
+        • Glaçon dans l'eau → chute de température<br>
+        • Frotter la sonde → augmentation légère
+      </p>
+      <div class="success">Plage biodigesteur : 25°C - 40°C<br>Optimal : 30°C - 38°C (mésophile)</div>
+    </div>
+    
+    <div class="sensor-card press">
+      <h3>📊 Pression (BMP280)</h3>
+      <p style="font-size:13px; line-height:1.6;">
+        <b>Simuler avec :</b><br>
+        • Pression ambiante normale (~1 bar)<br>
+        • Souffler doucement sur le capteur<br>
+        • Monter en altitude (ascenseur, étage)<br>
+        • Le capteur lit la pression atmosphérique
+      </p>
+      <div class="success">Plage biodigesteur : 0.8 - 1.5 bar<br>Normal : ~1.0 bar</div>
+    </div>
+    
+    <div class="sensor-card gas">
+      <h3>💨 Méthane (MQ-4)</h3>
+      <p style="font-size:13px; line-height:1.6;">
+        <b>Simuler avec :</b><br>
+        • Allumette éteinte près du capteur (gaz)<br>
+        • Briquet sans flamme (butane)<br>
+        • Vinaigre près du capteur (réaction)<br>
+        • Air frais → valeur basse
+      </p>
+      <div class="warning">⚠️ Chauffer le MQ-4 pendant <b>24h</b> avant première utilisation !</div>
+      <div class="success">Plage biodigesteur : 150 - 500 ppm<br>Normal : ~300 ppm</div>
+    </div>
+    
+    <div class="sensor-card level">
+      <h3>📏 Niveau (HC-SR04)</h3>
+      <p style="font-size:13px; line-height:1.6;">
+        <b>Simuler avec :</b><br>
+        • Main devant le capteur → niveau haut<br>
+        • Éloigner la main → niveau bas<br>
+        • Livre/carton à distance fixe → niveau stable<br>
+        • Rapprocher/éloigner → variation
+      </p>
+      <div class="success">Plage biodigesteur : 20% - 90%<br>Formule : niveau = (100 - distance) / 100 × 100</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>🚀 Étapes de Mise en Route (Simulation)</h2>
+
+<ol class="step-list">
+  <li><b>Acheter le matériel</b> (~21 000 FCFA) — voir liste ci-dessus</li>
+  <li><b>Créer le projet Supabase</b> sur supabase.com (gratuit)</li>
+  <li><b>Créer les tables</b> : sensor_readings, esp32_status, profiles (SQL dans le README)</li>
+  <li><b>Activer Realtime</b> sur sensor_readings et esp32_status</li>
+  <li><b>Configurer les politiques RLS</b> pour sécuriser les données</li>
+  <li><b>Récupérer</b> SUPABASE_URL et SUPABASE_ANON_KEY</li>
+  <li><b>Brancher les capteurs</b> selon le schéma ci-dessous</li>
+  <li><b>Installer Arduino IDE</b> + bibliothèques (DHT sensor library, Adafruit BMP280, ArduinoJson)</li>
+  <li><b>Modifier le code ESP8266</b> : WiFi SSID/password, Supabase URL/Key, User ID</li>
+  <li><b>Téléverser</b> le code sur l'ESP8266 via USB</li>
+  <li><b>Ouvrir le moniteur série</b> (115200 bauds) → vérifier les lectures</li>
+  <li><b>Simuler</b> : plonger DHT22 dans eau chaude, approcher allumette du MQ-4, etc.</li>
+  <li><b>Lancer l'application Flutter</b> → se connecter → voir les données en temps réel</li>
+  <li><b>Tester les alertes</b> : dépasser les seuils pour voir les notifications</li>
+</ol>
+
+<div style="background:#1a2e1a; border-radius:12px; padding:20px; margin:20px 0;">
+  <h3 style="color:#81c784;">🛒 Où acheter au Burkina Faso</h3>
+  <table class="pin-table">
+    <tr><th>Fournisseur</th><th>Lieu</th><th>Livraison</th></tr>
+    <tr><td>Comptoir des Composants</td><td>Ouagadougou</td><td>Sur place</td></tr>
+    <tr><td>ElectroShop BF</td><td>Facebook / En ligne</td><td>Livraison locale</td></tr>
+    <tr><td>AliExpress</td><td>aliexpress.com</td><td>3-4 semaines (~20 000 F le kit complet)</td></tr>
+    <tr><td>Amazon</td><td>amazon.fr</td><td>2-3 semaines</td></tr>
+  </table>
+  <div class="success" style="margin-top:10px;">Astuce : cherchez "ESP8266 sensor kit" sur AliExpress pour un kit complet à ~20 000 FCFA</div>
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <h2>📌 Schéma de Câblage Complet</h2>
@@ -184,38 +286,37 @@
 <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;margin:20px auto;display:block;">
   <!-- Background -->
   <rect width="800" height="520" fill="#0f1f0f" rx="12"/>
-  <text x="400" y="25" text-anchor="middle" fill="#4caf50" font-size="16" font-weight="bold">SCHÉMA DE CÂBLAGE - BioDigit ESP32</text>
+  <text x="400" y="25" text-anchor="middle" fill="#4caf50" font-size="16" font-weight="bold">SCHÉMA DE CÂBLAGE - BioDigit ESP8266</text>
   
-  <!-- ═══ ESP32 Board ═══ -->
+  <!-- ═══ ESP8266 Board ═══ -->
   <rect x="280" y="160" width="240" height="300" rx="10" fill="#1a3a2a" stroke="#4caf50" stroke-width="2.5"/>
   <rect x="300" y="175" width="200" height="270" rx="6" fill="#263238" stroke="#546e7a" stroke-width="1.5"/>
-  <text x="400" y="200" text-anchor="middle" fill="#4caf50" font-size="13" font-weight="bold">ESP32 DevKit V1</text>
+  <text x="400" y="200" text-anchor="middle" fill="#4caf50" font-size="13" font-weight="bold">ESP8266 DevKit V1</text>
   <circle cx="320" cy="185" r="4" fill="#546e7a"/>
   <circle cx="480" cy="185" r="4" fill="#546e7a"/>
   
-  <!-- ESP32 Pins Left -->
+  <!-- ESP8266 Pins Left -->
   <rect x="280" y="220" width="50" height="18" rx="3" fill="#c62828"/><text x="305" y="233" text-anchor="middle" fill="white" font-size="9">3V3</text>
   <rect x="280" y="245" width="50" height="18" rx="3" fill="#424242"/><text x="305" y="258" text-anchor="middle" fill="white" font-size="9">GND</text>
-  <rect x="280" y="270" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="283" text-anchor="middle" fill="white" font-size="9">GPIO4</text>
-  <rect x="280" y="295" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="308" text-anchor="middle" fill="white" font-size="9">GPIO21</text>
-  <rect x="280" y="320" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="333" text-anchor="middle" fill="white" font-size="9">GPIO22</text>
-  <rect x="280" y="370" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="383" text-anchor="middle" fill="white" font-size="9">GPIO5</text>
-  <rect x="280" y="395" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="408" text-anchor="middle" fill="white" font-size="9">GPIO18</text>
+  <rect x="280" y="270" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="283" text-anchor="middle" fill="white" font-size="9">D2</text>
+  <rect x="280" y="295" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="308" text-anchor="middle" fill="white" font-size="9">D1</text>
+  <rect x="280" y="320" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="333" text-anchor="middle" fill="white" font-size="9">D5</text>
+  <rect x="280" y="370" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="383" text-anchor="middle" fill="white" font-size="9">D6</text>
+  <rect x="280" y="395" width="50" height="18" rx="3" fill="#2e7d32"/><text x="305" y="408" text-anchor="middle" fill="white" font-size="9">A0</text>
   
-  <!-- ESP32 Pins Right -->
+  <!-- ESP8266 Pins Right -->
   <rect x="470" y="220" width="50" height="18" rx="3" fill="#c62828"/><text x="495" y="233" text-anchor="middle" fill="white" font-size="9">5V</text>
   <rect x="470" y="245" width="50" height="18" rx="3" fill="#424242"/><text x="495" y="258" text-anchor="middle" fill="white" font-size="9">GND</text>
-  <rect x="470" y="295" width="50" height="18" rx="3" fill="#2e7d32"/><text x="495" y="308" text-anchor="middle" fill="white" font-size="9">GPIO34</text>
   
-  <!-- ═══ DS18B20 Sensor ═══ -->
+  <!-- ═══ DHT22 Sensor ═══ -->
   <rect x="30" y="240" width="140" height="80" rx="8" fill="#1a2e1a" stroke="#ef5350" stroke-width="2"/>
-  <text x="100" y="262" text-anchor="middle" fill="#ef5350" font-size="12" font-weight="bold">🌡️ DS18B20</text>
+  <text x="100" y="262" text-anchor="middle" fill="#ef5350" font-size="12" font-weight="bold">🌡️ DHT22</text>
   <text x="100" y="280" text-anchor="middle" fill="#e0e0e0" font-size="10">Température</text>
   <text x="55" y="305" text-anchor="middle" fill="#c62828" font-size="9">VCC</text>
   <text x="100" y="305" text-anchor="middle" fill="#f9a825" font-size="9">DATA</text>
   <text x="145" y="305" text-anchor="middle" fill="#666" font-size="9">GND</text>
   
-  <!-- DS18B20 Wires -->
+  <!-- DHT22 Wires -->
   <line x1="55" y1="310" x2="55" y2="340" stroke="#c62828" stroke-width="2"/>
   <line x1="55" y1="340" x2="250" y2="340" stroke="#c62828" stroke-width="2"/>
   <line x1="250" y1="340" x2="250" y2="229" stroke="#c62828" stroke-width="2"/>
@@ -226,7 +327,7 @@
   <line x1="100" y1="350" x2="260" y2="350" stroke="#f9a825" stroke-width="2"/>
   <line x1="260" y1="350" x2="260" y2="279" stroke="#f9a825" stroke-width="2"/>
   <line x1="260" y1="279" x2="280" y2="279" stroke="#f9a825" stroke-width="2"/>
-  <text x="180" y="365" fill="#f9a825" font-size="8">DATA + 4.7kΩ</text>
+  <text x="180" y="365" fill="#f9a825" font-size="8">DATA (direct)</text>
   
   <line x1="145" y1="310" x2="145" y2="370" stroke="#666" stroke-width="2"/>
   <line x1="145" y1="370" x2="255" y2="370" stroke="#666" stroke-width="2"/>
@@ -234,9 +335,7 @@
   <line x1="255" y1="254" x2="280" y2="254" stroke="#666" stroke-width="2"/>
   <text x="180" y="385" fill="#999" font-size="8">GND</text>
   
-  <!-- 4.7kΩ Resistor Symbol -->
-  <rect x="85" y="345" width="30" height="10" rx="2" fill="none" stroke="#ff9800" stroke-width="1.5"/>
-  <text x="100" y="353" text-anchor="middle" fill="#ff9800" font-size="7">4.7k</text>
+  <!-- 4.7kΩ Resistor - integrated in module -->
   
   <!-- ═══ BMP280 Sensor ═══ -->
   <rect x="30" y="400" width="140" height="80" rx="8" fill="#1a2e1a" stroke="#42a5f5" stroke-width="2"/>
@@ -255,13 +354,13 @@
   <line x1="95" y1="500" x2="265" y2="500" stroke="#1565c0" stroke-width="2"/>
   <line x1="265" y1="500" x2="265" y2="304" stroke="#1565c0" stroke-width="2"/>
   <line x1="265" y1="304" x2="280" y2="304" stroke="#1565c0" stroke-width="2"/>
-  <text x="170" y="510" fill="#1565c0" font-size="8">SDA → GPIO21</text>
+  <text x="170" y="510" fill="#1565c0" font-size="8">SDA → D2 (GPIO4)</text>
   
   <line x1="135" y1="470" x2="135" y2="505" stroke="#2e7d32" stroke-width="2"/>
   <line x1="135" y1="505" x2="270" y2="505" stroke="#2e7d32" stroke-width="2"/>
   <line x1="270" y1="505" x2="270" y2="329" stroke="#2e7d32" stroke-width="2"/>
   <line x1="270" y1="329" x2="280" y2="329" stroke="#2e7d32" stroke-width="2"/>
-  <text x="200" y="498" fill="#2e7d32" font-size="8">SCL → GPIO22</text>
+  <text x="200" y="498" fill="#2e7d32" font-size="8">SCL → D1 (GPIO5)</text>
   
   <!-- ═══ MQ-4 Sensor ═══ -->
   <rect x="600" y="240" width="160" height="90" rx="8" fill="#1a2e1a" stroke="#ff9800" stroke-width="2"/>
@@ -282,7 +381,7 @@
   <line x1="680" y1="360" x2="540" y2="360" stroke="#ff9800" stroke-width="2"/>
   <line x1="540" y1="360" x2="540" y2="304" stroke="#ff9800" stroke-width="2"/>
   <line x1="540" y1="304" x2="520" y2="304" stroke="#ff9800" stroke-width="2"/>
-  <text x="600" y="375" fill="#ff9800" font-size="8">AOUT → GPIO34</text>
+  <text x="600" y="375" fill="#ff9800" font-size="8">AOUT → A0</text>
   
   <line x1="730" y1="320" x2="730" y2="380" stroke="#666" stroke-width="2"/>
   <line x1="730" y1="380" x2="555" y2="380" stroke="#666" stroke-width="2"/>
@@ -307,18 +406,15 @@
   <line x1="670" y1="510" x2="545" y2="510" stroke="#6a1b9a" stroke-width="2"/>
   <line x1="545" y1="510" x2="545" y2="379" stroke="#6a1b9a" stroke-width="2"/>
   <line x1="545" y1="379" x2="520" y2="379" stroke="#6a1b9a" stroke-width="2"/>
-  <text x="600" y="505" fill="#6a1b9a" font-size="8">TRIG → GPIO5</text>
+  <text x="600" y="505" fill="#6a1b9a" font-size="8">TRIG → D5 (GPIO14)</text>
   
-  <line x1="710" y1="480" x2="710" y2="495" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="4,2"/>
-  <line x1="710" y1="495" x2="535" y2="495" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="4,2"/>
-  <line x1="535" y1="495" x2="535" y2="404" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="4,2"/>
-  <line x1="535" y1="404" x2="520" y2="404" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="4,2"/>
-  <text x="620" y="488" fill="#ab47bc" font-size="8">ECHO → GPIO18 ⚠️</text>
+  <line x1="710" y1="480" x2="710" y2="495" stroke="#6a1b9a" stroke-width="2"/>
+  <line x1="710" y1="495" x2="535" y2="495" stroke="#6a1b9a" stroke-width="2"/>
+  <line x1="535" y1="495" x2="535" y2="404" stroke="#6a1b9a" stroke-width="2"/>
+  <line x1="535" y1="404" x2="520" y2="404" stroke="#6a1b9a" stroke-width="2"/>
+  <text x="620" y="488" fill="#ab47bc" font-size="8">ECHO → D6 (GPIO12)</text>
   
-  <!-- Voltage Divider Box -->
-  <rect x="520" y="430" width="90" height="40" rx="6" fill="#3e2723" stroke="#ff6f00" stroke-width="1.5"/>
-  <text x="565" y="447" text-anchor="middle" fill="#ff6f00" font-size="8" font-weight="bold">⚡ Diviseur</text>
-  <text x="565" y="460" text-anchor="middle" fill="#ffb74d" font-size="7">1kΩ + 2kΩ → 3.3V</text>
+  <!-- No voltage divider needed -->
   
   <!-- Legend -->
   <rect x="20" y="40" width="200" height="100" rx="8" fill="#1a2e1a" stroke="#37474f" stroke-width="1"/>
@@ -326,46 +422,39 @@
   <line x1="35" y1="78" x2="65" y2="78" stroke="#c62828" stroke-width="3"/><text x="75" y="82" fill="#e0e0e0" font-size="10">Alimentation (3V3/5V)</text>
   <line x1="35" y1="98" x2="65" y2="98" stroke="#666" stroke-width="3"/><text x="75" y="102" fill="#e0e0e0" font-size="10">GND (Masse)</text>
   <line x1="35" y1="118" x2="65" y2="118" stroke="#4caf50" stroke-width="3"/><text x="75" y="122" fill="#e0e0e0" font-size="10">Signal / Données</text>
-  <line x1="35" y1="133" x2="65" y2="133" stroke="#6a1b9a" stroke-width="3" stroke-dasharray="4,2"/><text x="75" y="137" fill="#e0e0e0" font-size="10">Avec diviseur tension</text>
+  <line x1="35" y1="133" x2="65" y2="133" stroke="#6a1b9a" stroke-width="3"/><text x="75" y="137" fill="#e0e0e0" font-size="10">Signal / Données</text>
 </svg>
 
 <div class="esp32-visual">
-  <div class="esp32-label">ESP32 DevKit V1</div>
+  <div class="esp32-label">ESP8266 DevKit V1</div>
   <div class="esp32-chip">
     <div class="pin-row">
       <span class="pin pin-power">3V3</span>
-      <span class="pin pin-free">GPIO 2</span>
-      <span class="pin pin-free">GPIO 0</span>
-      <span class="pin pin-free">GPIO 1</span>
-      <span class="pin pin-free">GPIO 3</span>
+      <span class="pin pin-free">D0 (GPIO 16)</span>
+      <span class="pin pin-free">D3 (GPIO 0)</span>
+      <span class="pin pin-free">D4 (GPIO 2)</span>
+      <span class="pin pin-free">D7 (GPIO 13)</span>
     </div>
     <div class="pin-row">
       <span class="pin pin-gnd">GND</span>
-      <span class="pin pin-free">GPIO 15</span>
-      <span class="pin pin-used">GPIO 4 → DS18B20</span>
-      <span class="pin pin-free">GPIO 16</span>
-      <span class="pin pin-free">GPIO 17</span>
+      <span class="pin pin-free">D8 (GPIO 15)</span>
+      <span class="pin pin-used">D2 (GPIO 4) → DHT22</span>
+      <span class="pin pin-free">A0</span>
+      <span class="pin pin-free">VIN (5V)</span>
     </div>
     <div class="pin-row">
-      <span class="pin pin-used">GPIO 21 → BMP SDA</span>
-      <span class="pin pin-free">GPIO 13</span>
-      <span class="pin pin-free">GPIO 12</span>
+      <span class="pin pin-used">D1 (GPIO 5) → BMP SCL</span>
+      <span class="pin pin-free">RX (GPIO 3)</span>
+      <span class="pin pin-free">TX (GPIO 1)</span>
       <span class="pin pin-gnd">GND</span>
-      <span class="pin pin-free">GPIO 14</span>
-    </div>
-    <div class="pin-row">
-      <span class="pin pin-used">GPIO 22 → BMP SCL</span>
-      <span class="pin pin-free">GPIO 2</span>
-      <span class="pin pin-free">GPIO 23</span>
-      <span class="pin pin-used">GPIO 5 → HC Trig</span>
-      <span class="pin pin-used">GPIO 18 → HC Echo</span>
-    </div>
-    <div class="pin-row">
       <span class="pin pin-power">5V (VIN)</span>
-      <span class="pin pin-free">GPIO 19</span>
-      <span class="pin pin-gnd">GND</span>
-      <span class="pin pin-used">GPIO 34 → MQ4</span>
-      <span class="pin pin-free">GPIO 35</span>
+    </div>
+    <div class="pin-row">
+      <span class="pin pin-used">D5 (GPIO 14) → HC Trig</span>
+      <span class="pin pin-used">D6 (GPIO 12) → HC Echo</span>
+      <span class="pin pin-used">A0 → MQ-4</span>
+      <span class="pin pin-free">SD3 (GPIO 10)</span>
+      <span class="pin pin-free">SD2 (GPIO 9)</span>
     </div>
   </div>
   <p style="text-align:center; margin-top:15px; font-size:13px; color:#78909c;">
@@ -381,30 +470,27 @@
 
 <div class="wiring-grid">
 
-  <!-- DS18B20 -->
+  <!-- DHT22 -->
   <div class="sensor-card temp">
-    <h3>🌡️ DS18B20 - Température</h3>
+    <h3>🌡️ DHT22 - Température + Humidité</h3>
     <table class="pin-table">
-      <tr><th>Fil DS18B20</th><th>Couleur</th><th>→ ESP32</th></tr>
+      <tr><th>Fil DHT22</th><th>Couleur</th><th>→ ESP8266</th></tr>
       <tr><td>VCC</td><td><span class="wire wire-red">Rouge</span></td><td>3V3</td></tr>
       <tr><td>GND</td><td><span class="wire wire-black">Noir</span></td><td>GND</td></tr>
-      <tr><td>DATA</td><td><span class="wire wire-yellow">Jaune</span></td><td>GPIO 4</td></tr>
+      <tr><td>DATA</td><td><span class="wire wire-yellow">Jaune</span></td><td>D2 (GPIO 4)</td></tr>
     </table>
-    <div class="warning">Résistance <b>4.7kΩ</b> obligatoire entre VCC et DATA !</div>
-    <p style="font-size:12px; margin-top:8px;">
-      Schéma : <span class="wire wire-red">3V3</span> → [4.7kΩ] → <span class="wire wire-yellow">DATA/GPIO4</span>
-    </p>
+    <div class="success">Pas de résistance nécessaire avec le module DHT22 (pull-up intégrée)</div>
   </div>
 
   <!-- BMP280 -->
   <div class="sensor-card press">
     <h3>📊 BMP280 - Pression (I2C)</h3>
     <table class="pin-table">
-      <tr><th>Broche BMP280</th><th>→ ESP32</th></tr>
+      <tr><th>Broche BMP280</th><th>→ ESP8266</th></tr>
       <tr><td>VIN / VCC</td><td><span class="wire wire-red">3V3</span></td></tr>
       <tr><td>GND</td><td><span class="wire wire-black">GND</span></td></tr>
-      <tr><td>SCL</td><td><span class="wire wire-blue">GPIO 22</span></td></tr>
-      <tr><td>SDA</td><td><span class="wire wire-green">GPIO 21</span></td></tr>
+      <tr><td>SCL</td><td><span class="wire wire-blue">D1 (GPIO 5)</span></td></tr>
+      <tr><td>SDA</td><td><span class="wire wire-green">D2 (GPIO 4)</span></td></tr>
     </table>
     <p style="font-size:12px; margin-top:8px;">Adresse I2C : <span class="code">0x76</span> (défaut)</p>
   </div>
@@ -413,10 +499,10 @@
   <div class="sensor-card gas">
     <h3>💨 MQ-4 - Méthane (CH4)</h3>
     <table class="pin-table">
-      <tr><th>Broche MQ-4</th><th>→ ESP32</th></tr>
+      <tr><th>Broche MQ-4</th><th>→ ESP8266</th></tr>
       <tr><td>VCC</td><td><span class="wire wire-orange">5V (VIN)</span> ⚠️ 5V requis!</td></tr>
       <tr><td>GND</td><td><span class="wire wire-black">GND</span></td></tr>
-      <tr><td>AOUT</td><td><span class="wire wire-orange">GPIO 34</span> (ADC)</td></tr>
+      <tr><td>AOUT</td><td><span class="wire wire-orange">A0</span> (connexion directe, sans diviseur)</td></tr>
       <tr><td>DOUT</td><td>Non utilisé</td></tr>
     </table>
     <div class="warning">Chauffer <b>24h</b> avant première utilisation. Consomme ~800mA.</div>
@@ -426,36 +512,18 @@
   <div class="sensor-card level">
     <h3>📏 HC-SR04 - Niveau Ultrason</h3>
     <table class="pin-table">
-      <tr><th>Broche HC-SR04</th><th>→ ESP32</th></tr>
+      <tr><th>Broche HC-SR04</th><th>→ ESP8266</th></tr>
       <tr><td>VCC</td><td><span class="wire wire-orange">5V (VIN)</span> ⚠️ 5V requis!</td></tr>
       <tr><td>GND</td><td><span class="wire wire-black">GND</span></td></tr>
-      <tr><td>Trig</td><td><span class="wire wire-purple">GPIO 5</span></td></tr>
-      <tr><td>Echo</td><td><span class="wire wire-purple">GPIO 18</span> ⚠️ Diviseur!</td></tr>
+      <tr><td>Trig</td><td><span class="wire wire-purple">D5 (GPIO 14)</span></td></tr>
+      <tr><td>Echo</td><td><span class="wire wire-purple">D6 (GPIO 12)</span></td></tr>
     </table>
-    <div class="warning">Echo sort <b>5V</b>, GPIO18 accepte <b>3.3V max</b> !<br>
-    Diviseur : Echo → [1kΩ] → GPIO18 → [2kΩ] → GND</div>
+    <div class="success">Pas de diviseur nécessaire en mode simulation</div>
   </div>
 
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<h2>⚡ Diviseur de Tension (HC-SR04 Echo → ESP32)</h2>
-
-<div style="background:#1a2e1a; border-radius:12px; padding:20px; text-align:center; font-family:monospace; font-size:14px; line-height:2;">
-<pre style="color:#e0e0e0;">
-  HC-SR04 Echo (5V)
-       │
-      <span style="color:#ff9800;">[1kΩ]</span>
-       │
-       ├──────────→ <span style="color:#4caf50;">GPIO 18 (ESP32)</span>  ← 3.3V ✓
-       │
-      <span style="color:#ff9800;">[2kΩ]</span>
-       │
-      GND
-
-  Calcul : 5V × 2kΩ/(1kΩ+2kΩ) = <span style="color:#4caf50;">3.3V</span> ✓
-</pre>
-</div>
+<!-- Pas de diviseur de tension nécessaire en mode simulation -->
 
 <!-- ═══════════════════════════════════════════ -->
 <h2>🔄 Flux de Données - Du Capteur à l'Application</h2>
@@ -466,7 +534,7 @@
   <!-- Step 1 -->
   <rect x="15" y="30" width="140" height="100" rx="10" fill="#1a2e1a" stroke="#ff9800" stroke-width="2"/>
   <circle cx="85" cy="55" r="14" fill="#ff9800"/><text x="85" y="60" text-anchor="middle" fill="white" font-size="12" font-weight="bold">1</text>
-  <text x="85" y="85" text-anchor="middle" fill="#ffb74d" font-size="11" font-weight="bold">ESP32</text>
+  <text x="85" y="85" text-anchor="middle" fill="#ffb74d" font-size="11" font-weight="bold">ESP8266</text>
   <text x="85" y="100" text-anchor="middle" fill="#9e9e9e" font-size="9">Lit les capteurs</text>
   <text x="85" y="115" text-anchor="middle" fill="#9e9e9e" font-size="9">toutes les 5s</text>
   
@@ -598,7 +666,7 @@ Body:
     <h3>🏠 Dashboard Principal</h3>
     <ul style="font-size:13px; padding-left:20px; line-height:1.8;">
       <li>4 jauges capteurs (temp, pression, CH4, niveau)</li>
-      <li>Statut ESP32 (connecté/déconnecté)</li>
+      <li>Statut ESP8266 (connecté/déconnecté)</li>
       <li>Production biogaz (graphique)</li>
       <li>Impact énergétique</li>
       <li>Insight quotidien</li>
@@ -610,7 +678,7 @@ Body:
       <li>Jauges circulaires temps réel</li>
       <li>Maintenance prédictive</li>
       <li>Santé des capteurs</li>
-      <li>Barre de connexion ESP32</li>
+      <li>Barre de connexion ESP8266</li>
     </ul>
   </div>
   <div class="sensor-card" style="border-color:#ef5350;">
@@ -645,9 +713,9 @@ Body:
   <li><b>Créer un compte utilisateur</b> dans l'application Flutter (inscription)</li>
   <li><b>Copier l'UUID</b> de l'utilisateur (Supabase Dashboard → Authentication → Users)</li>
   <li><b>Brancher les capteurs</b> selon le schéma ci-dessus</li>
-  <li><b>Installer Arduino IDE</b> + bibliothèques (OneWire, DallasTemperature, Adafruit BMP280, ArduinoJson)</li>
-  <li><b>Modifier le code ESP32</b> : WiFi SSID/password, Supabase URL/Key, User ID</li>
-  <li><b>Téléverser</b> le code sur l'ESP32</li>
+  <li><b>Installer Arduino IDE</b> + bibliothèques (DHT sensor library, Adafruit BMP280, ArduinoJson)</li>
+  <li><b>Modifier le code ESP8266</b> : WiFi SSID/password, Supabase URL/Key, User ID</li>
+  <li><b>Téléverser</b> le code sur l'ESP8266</li>
   <li><b>Ouvrir le moniteur série</b> (115200 bauds) → vérifier les lectures</li>
   <li><b>Lancer l'application Flutter</b> → se connecter → voir les données en temps réel</li>
 </ol>
@@ -656,7 +724,7 @@ Body:
 <h2>✅ Vérification Finale</h2>
 
 <div class="success">
-  <b>Moniteur série ESP32 affiche :</b><br>
+  <b>Moniteur série ESP8266 affiche :</b><br>
   <code>[OK] WiFi connecte! IP: 192.168.1.xxx</code><br>
   <code>Temp: 36.5°C | Press: 1.05 bar | CH4: 320 ppm | Niveau: 72.5%</code><br>
   <code>[OK] Donnees envoyees a Supabase</code>
@@ -677,8 +745,8 @@ Body:
 
 <table class="pin-table">
   <tr><th>Problème</th><th>Cause</th><th>Solution</th></tr>
-  <tr><td>BMP280 non trouvé</td><td>Câblage I2C</td><td>Vérifier SDA=21, SCL=22, adresse 0x76</td></tr>
-  <tr><td>Temp = -127°C</td><td>Pas de pull-up</td><td>Ajouter résistance 4.7kΩ</td></tr>
+  <tr><td>BMP280 non trouvé</td><td>Câblage I2C</td><td>Vérifier SDA=D2, SCL=D1, adresse 0x76</td></tr>
+  <tr><td>Temp = NaN</td><td>Broche DATA</td><td>Vérifier connexion DATA sur D2</td></tr>
   <tr><td>MQ-4 = 0</td><td>Pas préchauffé</td><td>Attendre 24h de chauffage</td></tr>
   <tr><td>WiFi échec</td><td>Mauvais SSID</td><td>Vérifier : WiFi 2.4GHz uniquement</td></tr>
   <tr><td>HTTP 401</td><td>Mauvaise clé</td><td>Vérifier SUPABASE_ANON_KEY</td></tr>

@@ -84,6 +84,16 @@ class AuthService {
     String role = 'user',
   }) async {
     try {
+      // Check if email already exists
+      final existingUser = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+      if (existingUser != null) {
+        throw AuthException('Cet email est deja utilise. Utilisez un autre email ou connectez-vous.');
+      }
+
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
@@ -94,7 +104,7 @@ class AuthService {
         },
       );
       if (response.user == null) {
-        throw AuthException('Échec de création du compte.');
+        throw AuthException('Echec de creation du compte.');
       }
       final profile = UserModel(
         id: response.user!.id,

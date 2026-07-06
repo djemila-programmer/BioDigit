@@ -202,12 +202,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         _buildInputField(context,
                           icon: Icons.lock,
                           label: 'Mot de passe',
-                          hint: 'Min. 6 caractères',
+                          hint: 'Min. 8 car. : majuscule, minuscule, chiffre, special',
                           obscure: _obscurePassword,
                           controller: _passwordController,
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Mot de passe requis';
-                            if (v.length < 6) return 'Min. 6 caractères';
+                            if (v.length < 8) return 'Min. 8 caracteres';
+                            if (!v.contains(RegExp('[A-Z]'))) return 'Au moins 1 majuscule requise';
+                            if (!v.contains(RegExp('[a-z]'))) return 'Au moins 1 minuscule requise';
+                            if (!v.contains(RegExp('[0-9]'))) return 'Au moins 1 chiffre requis';
+                            if (!v.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) return 'Au moins 1 caractere special requis (!@#...)';
                             return null;
                           },
                           suffix: IconButton(
