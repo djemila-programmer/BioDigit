@@ -22,7 +22,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <DHT.h>
 #include <Wire.h>
@@ -33,7 +33,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 // WiFi
-const char* WIFI_SSID     = "Famille BAMBARA-5G";
+const char* WIFI_SSID     = "Famille BAMBARA";
 const char* WIFI_PASSWORD  = "Blaise@2384";
 
 // Supabase
@@ -49,7 +49,7 @@ const int SEND_INTERVAL = 5;
 // ═══════════════════════════════════════════════════════════════
 
 // DHT22 - Température + Humidité
-#define DHT_PIN 4       // GPIO 4 = D2 sur NodeMCU
+#define DHT_PIN 13       // GPIO 4 = D2 sur NodeMCU
 #define DHT_TYPE DHT22
 DHT dht(DHT_PIN, DHT_TYPE);
 
@@ -165,22 +165,8 @@ double readMethane() {
 }
 
 double readSlurryLevel() {
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  
-  long duration = pulseIn(ECHO_PIN, HIGH, 30000);  // timeout 30ms
-  if (duration == 0) return 0;
-  
-  double distance = duration * 0.034 / 2;  // cm
-  double cuveHeight = 100.0;
-  double level = ((cuveHeight - distance) / cuveHeight) * 100.0;
-  
-  if (level < 0) level = 0;
-  if (level > 100) level = 100;
-  return level;
+  // Simulation : valeur fixe
+  return 72.0;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -204,7 +190,8 @@ void sendToSupabase(double temp, double pressure, double methane,
                     String methT, String levT) {
   if (WiFi.status() != WL_CONNECTED) return;
   
-  WiFiClient client;
+  WiFiClientSecure client;
+  client.setInsecure();  // Ignore SSL certificate verification
   HTTPClient http;
   String url = String(SUPABASE_URL) + "/rest/v1/sensor_readings";
   
@@ -212,7 +199,6 @@ void sendToSupabase(double temp, double pressure, double methane,
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", SUPABASE_ANON_KEY);
   http.addHeader("Authorization", String("Bearer ") + SUPABASE_ANON_KEY);
-  http.addHeader("Prefer", "return=minimal");
   
   StaticJsonDocument<512> doc;
   doc["user_id"] = USER_ID;
@@ -227,13 +213,14 @@ void sendToSupabase(double temp, double pressure, double methane,
   
   String json;
   serializeJson(doc, json);
+  Serial.println("JSON: " + json);
   
   int httpCode = http.POST(json);
   
-  if (httpCode == 201) {
+  if (httpCode == 201 || httpCode == 200) {
     Serial.println("  [OK] Envoye a Supabase");
   } else {
-    Serial.printf("  [ERREUR] HTTP %d\n", httpCode);
+    Serial.printf("  [ERREUR] HTTP %d - %s\n", httpCode, http.getString().c_str());
   }
   
   http.end();
@@ -242,7 +229,8 @@ void sendToSupabase(double temp, double pressure, double methane,
 void sendStatus() {
   if (WiFi.status() != WL_CONNECTED) return;
   
-  WiFiClient client;
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
   String url = String(SUPABASE_URL) + "/rest/v1/esp32_status";
   
@@ -293,3 +281,6 @@ void connectWiFi() {
     Serial.println("\n[ERREUR] WiFi echec");
   }
 }
+
+
+
