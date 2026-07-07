@@ -56,7 +56,7 @@ class AnomalyService {
   static const Map<String, _Threshold> _thresholds = {
     'temperature': _Threshold(min: 25.0, max: 40.0, warnLow: 27.0, warnHigh: 38.0),
     'pressure': _Threshold(min: 0.8, max: 1.5, warnLow: 0.9, warnHigh: 1.4),
-    'methane': _Threshold(min: 150.0, max: 500.0, warnLow: 180.0, warnHigh: 450.0),
+    'methane': _Threshold(min: 0.0, max: 500.0, warnLow: 150.0, warnHigh: 450.0),
     'slurryLevel': _Threshold(min: 20.0, max: 90.0, warnLow: 25.0, warnHigh: 85.0),
   };
 

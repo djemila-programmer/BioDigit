@@ -100,7 +100,7 @@ class NotificationService {
         body: 'Pression à ${reading.pressure.toStringAsFixed(2)} bar — vérifiez la soupape.',
       );
     }
-    if (reading.methane > 500 || reading.methane < 150) {
+    if (reading.methane > 500) {
       await _showLocalNotification(
         id: notificationId++,
         title: 'Méthane Critique',

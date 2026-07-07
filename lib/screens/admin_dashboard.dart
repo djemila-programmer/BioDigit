@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../supabase.dart';
 import '../theme/app_theme.dart';
-import '../models/user_model.dart';
 import '../routes.dart';
 import '../services/providers.dart';
 import 'farm_management.dart';
@@ -463,7 +463,7 @@ class _AdminHomeContent extends StatelessWidget {
               ],
             ),
           ),
-          ...FarmManager.mockManagers.map((m) => _managerRow(context, m)),
+          ..._buildManagerRows(context),
           const SizedBox(height: 24),
           Text(
             'System Configuration',
@@ -822,108 +822,6 @@ class _AdminHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _managerRow(BuildContext context, FarmManager manager) {
-    final cs = Theme.of(context).colorScheme;
-    Color statusColor;
-    switch (manager.status) {
-      case 'Healthy':
-        statusColor = const Color(0xFF1B5E20);
-        break;
-      case 'Maintenance':
-        statusColor = const Color(0xFFF57F17);
-        break;
-      default:
-        statusColor = AppTheme.error;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        border: Border(
-          bottom: BorderSide(
-            color: cs.outlineVariant.withValues(alpha: 0.2),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppTheme.primaryContainer.withValues(
-                    alpha: 0.1,
-                  ),
-                  child: Text(
-                    manager.initials,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        manager.name,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        manager.email,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              manager.assignedFarm,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                manager.status,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _configCard(
     IconData icon,
     String title,
@@ -987,183 +885,397 @@ class _AdminHomeContent extends StatelessWidget {
       },
     );
   }
-}
 
-// ─── Admin Users Content ───
-class _AdminUsersContent extends StatelessWidget {
-  const _AdminUsersContent();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final users = [
-      {
-        'name': 'Djemila Bonkoungou',
-        'email': 'admin@biodigit.bf',
-        'role': 'Admin',
-        'status': 'Active',
-      },
-      {
-        'name': 'Amadou Ouédraogo',
-        'email': 'amadou@biodigit.bf',
-        'role': 'Manager',
-        'status': 'Active',
-      },
-      {
-        'name': 'Ibrahim Sawadogo',
-        'email': 'i.sawadogo@biodigit.bf',
-        'role': 'Manager',
-        'status': 'Active',
-      },
-      {
-        'name': 'Fatimata Kaboré',
-        'email': 'f.kabore@biodigit.bf',
-        'role': 'Viewer',
-        'status': 'Inactive',
-      },
-      {
-        'name': 'Moussa Traoré',
-        'email': 'm.traore@biodigit.bf',
-        'role': 'Manager',
-        'status': 'Active',
-      },
+  List<Widget> _buildManagerRows(BuildContext context) {
+    return [
+      FutureBuilder<List<Map<String, dynamic>>>(
+        future: supabase
+            .from('profiles')
+            .select()
+            .eq('role', 'user')
+            .limit(5)
+            .then((response) => List<Map<String, dynamic>>.from(response)),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Erreur: ${snapshot.error}'),
+            );
+          }
+          final users = snapshot.data ?? [];
+          if (users.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Aucun utilisateur'),
+            );
+          }
+          return Column(
+            children: users.map((u) {
+              final name = u['full_name'] ?? u['email'] ?? 'Utilisateur';
+              final email = u['email'] ?? '';
+              final farmName = u['farm_name'] ?? 'Ferme non spécifiée';
+              final initials = name.split(' ').map((s) => s.isNotEmpty ? s[0] : '').take(2).join();
+              return _managerRowFromData(context, name, email, farmName, initials);
+            }).toList(),
+          );
+        },
+      ),
     ];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  }
+
+  Widget _managerRowFromData(
+    BuildContext context,
+    String name,
+    String email,
+    String farm,
+    String initials,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        border: Border(
+          bottom: BorderSide(
+            color: cs.outlineVariant.withValues(alpha: 0.2),
+          ),
+        ),
+      ),
+      child: Row(
         children: [
-          Text(
-            'User Management',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${users.length} registered users',
-            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHigh,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-            ),
+          Expanded(
+            flex: 2,
             child: Row(
               children: [
-                Expanded(
-                  flex: 2,
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppTheme.primaryContainer.withValues(alpha: 0.1),
                   child: Text(
-                    'User',
+                    initials,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: AppTheme.primary,
                     ),
                   ),
                 ),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    'Role',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Status',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        email,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          ...users.map((u) {
-            final isActive = u['status'] == 'Active';
-            final statusColor = isActive
-                ? const Color(0xFF1B5E20)
-                : cs.outlineVariant;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              farm,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest,
-                border: Border(
-                  bottom: BorderSide(
-                    color: cs.outlineVariant.withValues(alpha: 0.2),
-                  ),
+                color: const Color(0xFF1B5E20).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Actif',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1B5E20),
                 ),
               ),
-              child: Row(
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Admin Users Content (REAL DATA FROM SUPABASE) ───
+class _AdminUsersContent extends StatefulWidget {
+  const _AdminUsersContent();
+
+  @override
+  State<_AdminUsersContent> createState() => _AdminUsersContentState();
+}
+
+class _AdminUsersContentState extends State<_AdminUsersContent> {
+  List<Map<String, dynamic>> _users = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final response = await supabase
+          .from('profiles')
+          .select()
+          .order('created_at', ascending: false);
+      setState(() {
+        _users = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deleteUser(String userId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer cet utilisateur ?'),
+        content: const Text('Cette action est irréversible.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await supabase.from('profiles').delete().eq('id', userId);
+      await supabase.auth.admin.deleteUser(userId);
+      await _loadUsers();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Utilisateur supprimé')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e')),
+      );
+    }
+  }
+
+  Future<void> _changeUserRole(String userId, String currentRole) async {
+    final newRole = currentRole == 'admin' ? 'user' : 'admin';
+    try {
+      await supabase
+          .from('profiles')
+          .update({'role': newRole})
+          .eq('id', userId);
+      await _loadUsers();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rôle changé en: $newRole')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          u['name']!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          u['email']!,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Gestion des Utilisateurs',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      u['role']!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        u['status']!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: statusColor,
-                        ),
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_users.length} utilisateurs enregistrés',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
-            );
-          }),
+              IconButton(
+                onPressed: _loadUsers,
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_error != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text('Erreur: $_error'),
+            )
+          else if (_users.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('Aucun utilisateur trouvé'),
+              ),
+            )
+          else
+            Column(
+              children: _users.map((u) {
+                final role = u['role'] ?? 'user';
+                final isActive = u['is_active'] != false;
+                final statusColor = isActive
+                    ? const Color(0xFF1B5E20)
+                    : cs.outlineVariant;
+                final roleColor = role == 'admin'
+                    ? AppTheme.primary
+                    : AppTheme.secondary;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: cs.outlineVariant.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              u['full_name'] ?? u['email'] ?? 'Utilisateur',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              u['email'] ?? '',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: roleColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            role == 'admin' ? 'Admin' : 'User',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: roleColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isActive ? 'Actif' : 'Inactif',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () => _changeUserRole(u['id'], role),
+                        icon: Icon(
+                          role == 'admin' ? Icons.person : Icons.admin_panel_settings,
+                          size: 20,
+                        ),
+                        tooltip: role == 'admin' ? 'Rendre User' : 'Rendre Admin',
+                      ),
+                      IconButton(
+                        onPressed: () => _deleteUser(u['id']),
+                        icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                        tooltip: 'Supprimer',
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );

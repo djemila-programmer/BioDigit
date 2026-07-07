@@ -90,7 +90,7 @@ class SensorService {
     return {
       'temperature': {'min': 25.0, 'max': 40.0, 'unit': '°C'},
       'pressure': {'min': 0.8, 'max': 1.5, 'unit': 'bar'},
-      'methane': {'min': 150.0, 'max': 500.0, 'unit': 'ppm'},
+      'methane': {'min': 0.0, 'max': 500.0, 'unit': 'ppm'},
       'slurryLevel': {'min': 20.0, 'max': 90.0, 'unit': '%'},
     };
   }

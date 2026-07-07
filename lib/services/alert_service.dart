@@ -117,11 +117,11 @@ class AlertService {
         title: 'Méthane élevé: ${methane.toStringAsFixed(0)} ppm',
         description: 'Concentration de méthane au-dessus de 500 ppm. Risque de fuite.',
         severity: 'critical', sensorId: 'MQ-4', location: 'Dôme de gaz');
-    } else if (methane < 150) {
+    } else if (methane > 150) {
       await createAlert(
-        title: 'Méthane bas: ${methane.toStringAsFixed(0)} ppm',
-        description: 'Production de méthane insuffisante.',
-        severity: 'warning', sensorId: 'MQ-4', location: 'Dôme de gaz');
+        title: 'Méthane en production: ${methane.toStringAsFixed(0)} ppm',
+        description: 'Production de méthane détectée.',
+        severity: 'info', sensorId: 'MQ-4', location: 'Dôme de gaz');
     }
     if (slurryLevel > 90) {
       await createAlert(
