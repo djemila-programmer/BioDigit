@@ -44,8 +44,8 @@ class BiodigesterModel {
   );
 }
 
-/// ESP32 Controller status model.
-class ESP32Status {
+/// ESP8266 Controller status model.
+class ESP8266Status {
   final String status;
   final String wifiStrength;
   final String lastSync;
@@ -55,7 +55,7 @@ class ESP32Status {
   final String uptime;
   final double cpuTemp;
 
-  const ESP32Status({
+  const ESP8266Status({
     required this.status,
     required this.wifiStrength,
     required this.lastSync,
@@ -66,7 +66,7 @@ class ESP32Status {
     required this.cpuTemp,
   });
 
-  static const ESP32Status mockStatus = ESP32Status(
+  static const ESP8266Status mockStatus = ESP8266Status(
     status: 'Connected',
     wifiStrength: 'Excellent (-42 dBm)',
     lastSync: '15 seconds ago',
@@ -210,7 +210,7 @@ class MaintenanceItem {
       color: const Color(0xFFF57F17),
     ),
     MaintenanceItem(
-      title: 'ESP32 Diagnostics',
+      title: 'ESP8266 Diagnostics',
       description: 'Scheduled firmware update and diagnostic check. CPU temperature trending upward.',
       priority: 'low',
       dueDate: '2026-07-01',

@@ -9,7 +9,9 @@ import '../models/biodigester_model.dart';
 import '../services/providers.dart';
 
 class LiveMonitoring extends StatefulWidget {
-  const LiveMonitoring({super.key});
+  const LiveMonitoring({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<LiveMonitoring> createState() => _LiveMonitoringState();
@@ -67,7 +69,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 1),
     );
   }
 
@@ -84,6 +86,11 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             ),
             child: Row(
               children: [
+                if (widget.showBackButton)
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 const CircleAvatar(
                   radius: 20,
                   backgroundColor: AppTheme.primaryContainer,
@@ -131,7 +138,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             Icon(Icons.memory, color: isOnline ? AppTheme.primary : AppTheme.error, size: 18),
             const SizedBox(width: 8),
             Text(
-              'ESP32: ',
+              'ESP8266: ',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -286,7 +293,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             AppTheme.primary,
             Icons.thermostat,
             reading != null ? ((reading.temperature - 25) / 15).clamp(0.0, 1.0) : 0.0,
-            'DS18B20',
+            'DHT22',
             reading?.temperatureTrend ?? 'stable',
             reading != null ? 'Now' : '--',
           ),
@@ -451,7 +458,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Maintenance préventive',
+              context.watch<LocaleProvider>().isFrench ? 'Maintenance préventive' : 'Preventive Maintenance',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
@@ -462,7 +469,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
               onPressed: () {
                 // TODO: Navigate to full maintenance list when available
               },
-              child: const Text('Voir tout'),
+              child: Text(context.watch<LocaleProvider>().isFrench ? 'Voir tout' : 'View all'),
             ),
           ],
         ),
@@ -541,7 +548,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
         final reading = sensorProv.latestReading;
         final sensors = [
           {
-            'name': 'DS18B20 Temperature Sensor',
+            'name': 'DHT22 Temperature Sensor',
             'status': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? 'Normal' : 'Attention',
             'detail': reading != null
                 ? '${reading.temperature.toStringAsFixed(1)}\u00b0C - Mis a jour maintenant'

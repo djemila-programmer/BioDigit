@@ -85,6 +85,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Bouton de retour
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: Icon(Icons.arrow_back, color: cs.onSurfaceVariant),
+                            onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.landing, (route) => false),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Container(

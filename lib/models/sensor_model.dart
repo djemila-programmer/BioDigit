@@ -41,9 +41,9 @@ class SensorModel {
 
   static List<SensorModel> mockSensors = [
     SensorModel(
-      id: 'DS18B20',
+      id: 'DHT22',
       name: 'Temperature',
-      modelNumber: 'DS18B20',
+      modelNumber: 'DHT22',
       unit: '°C',
       value: 38.4,
       status: 'active',
@@ -155,7 +155,7 @@ class DashboardMetric {
       progress: 0.75,
       trend: 'rising',
       lastUpdate: '30s ago',
-      sensorModel: 'DS18B20',
+      sensorModel: 'DHT22',
     ),
     DashboardMetric(
       label: 'Pressure',

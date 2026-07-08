@@ -2,7 +2,7 @@
 
 ## Système intelligent de suivi de biodigesteur pour l'Afrique de l'Ouest
 
-Application Flutter IoT pour le monitoring en temps réel de biodigesteurs agricoles au Burkina Faso. Connexion ESP32 + capteurs → Supabase Realtime → Application mobile/desktop.
+Application Flutter IoT pour le monitoring en temps réel de biodigesteurs agricoles au Burkina Faso. Connexion ESP8266 + capteurs → Supabase Realtime → Application mobile/desktop.
 
 ---
 
@@ -22,8 +22,8 @@ Application Flutter IoT pour le monitoring en temps réel de biodigesteurs agric
 12. [Widgets réutilisables](#widgets-réutilisables)
 13. [Thème et dark mode](#thème-et-dark-mode)
 14. [Localisation FR/EN](#localisation-fr-en)
-15. [Connexion ESP32 et capteurs](#connexion-esp32-et-capteurs)
-16. [Tables Supabase pour ESP32](#tables-supabase-pour-esp32)
+15. [Connexion ESP8266 et capteurs](#connexion-esp8266-et-capteurs)
+16. [Tables Supabase pour ESP8266](#tables-supabase-pour-esp8266)
 17. [Flux de données temps réel](#flux-de-données-temps-réel)
 18. [Système d'alertes](#système-dalertes)
 19. [Détection d'anomalies IA](#détection-danomalies-ia)
@@ -40,8 +40,8 @@ Application Flutter IoT pour le monitoring en temps réel de biodigesteurs agric
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        ESP32 + Capteurs                          │
-│  DS18B20  │  BMP280  │  MQ-4  │  HC-SR04                        │
+│                        ESP8266 + Capteurs                          │
+│  DHT22    │  BMP280  │  MQ-4  │  HC-SR04                        │
 │  (Temp)   │ (Press.) │ (CH4)  │  (Niveau)                       │
 └──────────────────────┬──────────────────────────────────────────┘
                        │ WiFi → HTTP POST
@@ -115,7 +115,7 @@ biodigit_app/
 │   │   ├── user_model.dart          # UserModel + FarmManager
 │   │   ├── sensor_model.dart        # SensorModel + DashboardMetric
 │   │   ├── alert_model.dart         # AlertModel (critical/warning/info)
-│   │   └── biodigester_model.dart   # BiodigesterModel, ESP32Status, ThresholdConfig,
+│   │   └── biodigester_model.dart   # BiodigesterModel, ESP8266Status, ThresholdConfig,
 │   │                                  ProductionData, FeedingSchedule, MaintenanceItem
 │   │
 │   ├── screens/                     # 23 écrans
@@ -165,7 +165,7 @@ biodigit_app/
 │       ├── bottom_nav_bar.dart      # Barre de navigation inférieure
 │       ├── app_header.dart          # En-tête d'écran personnalisé
 │       └── common_widgets.dart      # Widgets réutilisables (BiodigesterVisual,
-│                                      MetricCard, ESP32StatusCard, SupabaseStatusCard,
+│                                      MetricCard, ESP8266StatusCard, SupabaseStatusCard,
 │                                      TrendIndicator, etc.)
 │
 ├── .env                             # Variables d'environnement (NON commité)
@@ -183,7 +183,7 @@ biodigit_app/
 - Dart SDK 3.8+
 - Compte Supabase
 - Android Studio / VS Code
-- (Optionnel) ESP32 + capteurs pour données réelles
+- (Optionnel) ESP8266 + capteurs pour données réelles
 
 ### Étapes
 
@@ -268,7 +268,7 @@ CREATE TABLE sensor_readings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Statut ESP32
+-- Statut ESP8266
 CREATE TABLE esp32_status (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID REFERENCES profiles(id),
@@ -353,8 +353,8 @@ CREATE POLICY "Users see own alerts" ON alerts
 CREATE POLICY "Users see own status" ON esp32_status
   FOR SELECT USING (auth.uid() = user_id);
 
--- ESP32 peut insérer des lectures
-CREATE POLICY "ESP32 insert readings" ON sensor_readings
+-- ESP8266 peut insérer des lectures
+CREATE POLICY "ESP8266 insert readings" ON sensor_readings
   FOR INSERT WITH CHECK (true);
 ```
 
@@ -485,9 +485,9 @@ Comportement :
 |---------|-------------|
 | `sensorDataStream()` | Stream temps réel de toutes les lectures capteur |
 | `singleSensorStream(sensorKey)` | Stream d'un seul capteur |
-| `esp32StatusStream()` | Stream statut ESP32 |
+| `esp32StatusStream()` | Stream statut ESP8266 |
 | `getCurrentReadings()` | Lecture ponctuelle des valeurs actuelles |
-| `getEsp32Status()` | Statut actuel ESP32 |
+| `getEsp32Status()` | Statut actuel ESP8266 |
 | `getThresholdConfig()` | Configuration seuils depuis Supabase |
 | `saveThresholdConfig(config)` | Sauvegarder seuils |
 | `getSensorHealthRecords()` | Historique santé capteurs |
@@ -568,7 +568,7 @@ Comportement :
 | `start(intervalSeconds)` | Démarrer simulation (jumeau numérique) |
 | `stop()` | Arrêter simulation |
 
-**NOTE** : La simulation est désactivée par défaut. L'affichage montre "Aucun capteur connecté" tant que l'ESP32 n'envoie pas de données réelles.
+**NOTE** : La simulation est activée par défaut. L'affichage montre les données simulées tant que l'ESP8266 n'envoie pas de données réelles.
 
 ---
 
@@ -721,7 +721,7 @@ En-tête d'écran personnalisé avec bouton retour.
 |--------|-------------|
 | `BiodigesterVisual` | Représentation visuelle du biodigesteur |
 | `MetricCard` | Carte de métrique avec jauge de progression |
-| `ESP32StatusCard` | Carte statut ESP32 (connecté/déconnecté) |
+| `ESP8266StatusCard` | Carte statut ESP8266 (connecté/déconnecté) |
 | `SupabaseStatusCard` | Carte statut connexion Supabase |
 | `TrendIndicator` | Indicateur de tendance (↑↓→) |
 | `BiogasProductionCard` | Carte production biogaz avec graphique |
@@ -792,40 +792,40 @@ La langue sélectionnée est sauvegardée dans Hive (`localeBox`).
 
 ---
 
-## Connexion ESP32 et capteurs
+## Connexion ESP8266 et capteurs
 
 ### Matériel requis
 
 | Composant | Modèle | Rôle |
 |-----------|--------|------|
-| Microcontrôleur | ESP32 | WiFi + GPIO |
-| Capteur température | DS18B20 ou DHT22 | Température bouillie |
+| Microcontrôleur | ESP8266 | WiFi + GPIO |
+| Capteur température | DHT22 | Température bouillie |
 | Capteur gaz | MQ-4 | Concentration méthane (CH4) |
 | Capteur pression | BMP280 | Pression interne |
 | Capteur ultrason | HC-SR04 | Niveau de bouillie |
 | Breadboard | - | Prototypage |
 | Fils jumper | Mâle-Mâle, Mâle-Femelle | Connexions |
-| Câble USB | - | Alimentation ESP32 |
+| Câble USB | - | Alimentation ESP8266 |
 
 ### Schéma de câblage
 
 ```
-ESP32 Pinout:
+ESP8266 Pinout:
 ┌──────────────────────────────┐
-│  DS18B20 (Temp)     → GPIO 4 │
-│  BMP280 (Press/I2C) → SDA=21, SCL=22 │
-│  MQ-4 (CH4)         → GPIO 34 (ADC) │
-│  HC-SR04 (Level)    → Trig=5, Echo=18 │
+│  DHT22 (Temp)       → GPIO 4 │
+│  BMP280 (Press/I2C) → SDA=4, SCL=5 │
+│  MQ-4 (CH4)         → A0 (ADC) │
+│  HC-SR04 (Level)    → Trig=12, Echo=14 │
 │  3.3V / GND         → Alimentation capteurs │
 └──────────────────────────────┘
 ```
 
-### Code ESP32 (Arduino)
+### Code ESP8266 (Arduino)
 
-L'ESP32 doit envoyer les données à Supabase via HTTP POST :
+L'ESP8266 doit envoyer les données à Supabase via HTTP POST :
 
 ```cpp
-// Exemple de payload envoyé par l'ESP32
+// Exemple de payload envoyé par l'ESP8266
 POST https://votre-projet.supabase.co/rest/v1/sensor_readings
 Headers:
   Authorization: Bearer VOTRE_CLE_ANON
@@ -852,25 +852,25 @@ Recommandé : toutes les 5 secondes pour un suivi temps réel fluide.
 
 ---
 
-## Tables Supabase pour ESP32
+## Tables Supabase pour ESP8266
 
-L'ESP32 interagit principalement avec 2 tables :
+L'ESP8266 interagit principalement avec 2 tables :
 
 ### `sensor_readings` (INSERT)
 
-L'ESP32 insère les lectures capteur. L'application Flutter les reçoit en temps réel via Supabase Realtime.
+L'ESP8266 insère les lectures capteur. L'application Flutter les reçoit en temps réel via Supabase Realtime.
 
 ### `esp32_status` (UPSERT)
 
-L'ESP32 met à jour son statut (connecté, signal WiFi, batterie, etc.).
+L'ESP8266 met à jour son statut (connecté, signal WiFi, batterie, etc.).
 
 ---
 
 ## Flux de données temps réel
 
 ```
-1. ESP32 lit les capteurs (toutes les 5s)
-2. ESP32 envoie POST à Supabase → sensor_readings
+1. ESP8266 lit les capteurs (toutes les 5s)
+2. ESP8266 envoie POST à Supabase → sensor_readings
 3. Supabase Realtime détecte l'insert
 4. WebSocket pousse la donnée à l'application Flutter
 5. SensorProvider reçoit la lecture
@@ -881,11 +881,11 @@ L'ESP32 met à jour son statut (connecté, signal WiFi, batterie, etc.).
 10. HistoryService enregistre dans l'historique
 ```
 
-### Comportement sans ESP32
+### Comportement sans ESP8266
 
-Quand aucun ESP32 n'est connecté :
+Quand aucun ESP8266 n'est connecté :
 - L'écran affiche **"Aucun capteur connecté"**
-- Message : **"Connectez votre ESP32 pour voir les données en temps réel."**
+- Message : **"Connectez votre ESP8266 pour voir les données en temps réel."**
 - Icône capteur désactivé affichée
 - Pas de données simulées (simulation désactivée)
 
@@ -979,7 +979,7 @@ Quand la connexion est perdue :
 | Type | Déclenchement |
 |------|---------------|
 | Seuil dépassé | Température/pression/méthane hors limites |
-| Capteur déconnecté | ESP32 ne répond plus |
+| Capteur déconnecté | ESP8266 ne répond plus |
 | Batterie faible | Batterie capteur < 20% |
 | Maintenance requise | Date de maintenance atteinte |
 | Anomalie détectée | Score de risque > 70 |
@@ -1045,8 +1045,8 @@ Version actuelle : `1.0.0+1` (dans `pubspec.yaml`)
 
 | Quantité | Composant | Prix estimé |
 |----------|-----------|-------------|
-| 1 | Carte ESP32 DevKit | ~8€ |
-| 1 | Capteur température DS18B20 | ~3€ |
+| 1 | Carte ESP8266 NodeMCU | ~8€ |
+| 1 | Capteur température DHT22 | ~3€ |
 | 1 | Capteur gaz MQ-4 | ~4€ |
 | 1 | Capteur pression BMP280 | ~5€ |
 | 1 | Capteur ultrason HC-SR04 | ~2€ |

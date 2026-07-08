@@ -103,11 +103,11 @@ class AlertModel {
       id: '6',
       title: 'Network Interruption Resolved',
       description:
-          'ESP32 Wi-Fi connection was interrupted for 3 minutes. Connection restored and data sync completed.',
+          'ESP8266 Wi-Fi connection was interrupted for 3 minutes. Connection restored and data sync completed.',
       severity: 'info',
       timeAgo: '1h ago',
-      location: 'ESP32 Controller',
-      sensorId: 'ESP32-01',
+      location: 'ESP8266 Controller',
+      sensorId: 'ESP8266-01',
       icon: Icons.wifi_off,
     ),
     AlertModel(

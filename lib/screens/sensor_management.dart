@@ -6,15 +6,27 @@ import '../widgets/bottom_nav_bar.dart';
 import '../widgets/common_widgets.dart';
 
 class SensorManagement extends StatelessWidget {
-  const SensorManagement({super.key});
+  const SensorManagement({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: const AppHeader(title: 'Sensor Management'),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text('Sensor Management', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
+      ),
+      bottomNavigationBar: showBackButton ? null : const BottomNavBar(currentIndex: 1),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(

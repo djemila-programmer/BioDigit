@@ -30,7 +30,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _getPage(BuildContext context, int index) {
     switch (index) {
       case 0:
-        return const _AdminHomeContent();
+        return _AdminHomeContent(
+          onNavigateToFarms: () => setState(() => _currentIndex = 2),
+        );
       case 1:
         return const _AdminUsersContent();
       case 2:
@@ -184,8 +186,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
 }
 
 // ─── Admin Home Content (the original dashboard) ───
-class _AdminHomeContent extends StatelessWidget {
-  const _AdminHomeContent();
+class _AdminHomeContent extends StatefulWidget {
+  const _AdminHomeContent({this.onNavigateToFarms});
+
+  final VoidCallback? onNavigateToFarms;
+
+  @override
+  State<_AdminHomeContent> createState() => _AdminHomeContentState();
+}
+
+class _AdminHomeContentState extends State<_AdminHomeContent> {
+  @override
+  void initState() {
+    super.initState();
+    // Load farms and system stats when dashboard opens
+    Future.microtask(() {
+      context.read<FarmProvider>().loadFarms();
+      context.read<FarmProvider>().loadSystemStats();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +352,7 @@ class _AdminHomeContent extends StatelessWidget {
                       Icons.storage,
                       AppTheme.primary,
                       '+ this week',
+                      onTap: widget.onNavigateToFarms,
                     ),
                     const SizedBox(height: 12),
                     _bigStatCard(
@@ -357,6 +377,7 @@ class _AdminHomeContent extends StatelessWidget {
                       Icons.storage,
                       AppTheme.primary,
                       '+ this week',
+                      onTap: widget.onNavigateToFarms,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -577,10 +598,11 @@ class _AdminHomeContent extends StatelessWidget {
     String label,
     IconData icon,
     Color color,
-    String subtitle,
-  ) {
+    String subtitle, {
+    VoidCallback? onTap,
+  }) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
@@ -640,6 +662,14 @@ class _AdminHomeContent extends StatelessWidget {
         ],
       ),
     );
+    
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: card,
+      );
+    }
+    return card;
   }
 
   Widget _alertDensityCard(BuildContext context) {
@@ -890,8 +920,7 @@ class _AdminHomeContent extends StatelessWidget {
     return [
       FutureBuilder<List<Map<String, dynamic>>>(
         future: supabase
-            .from('profiles')
-            .select()
+            .rpc('get_all_profiles')
             .eq('role', 'user')
             .limit(5)
             .then((response) => List<Map<String, dynamic>>.from(response)),
@@ -1050,8 +1079,7 @@ class _AdminUsersContentState extends State<_AdminUsersContent> {
     });
     try {
       final response = await supabase
-          .from('profiles')
-          .select()
+          .rpc('get_all_profiles')
           .order('created_at', ascending: false);
       setState(() {
         _users = List<Map<String, dynamic>>.from(response);

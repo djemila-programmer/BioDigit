@@ -5,15 +5,27 @@ import '../widgets/bottom_nav_bar.dart';
 import '../models/biodigester_model.dart';
 
 class FarmManagement extends StatelessWidget {
-  const FarmManagement({super.key});
+  const FarmManagement({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: const AppHeader(title: 'Farm Management'),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text('Farm Management', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
+      ),
+      bottomNavigationBar: showBackButton ? null : const BottomNavBar(currentIndex: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(

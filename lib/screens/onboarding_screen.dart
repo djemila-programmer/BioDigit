@@ -25,7 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     _OnboardingPage(
       title: 'Suivi IoT temps réel',
-      subtitle: 'ESP32 + CAPTEURS',
+      subtitle: 'ESP8266 + CAPTEURS',
       description:
           'Surveillez température, pression, méthane et niveau de substrat avec synchronisation instantanée via Supabase.',
       icon: Icons.sensors,

@@ -2,11 +2,11 @@ import 'dart:async';
 import '../supabase.dart';
 
 /// Real-time sensor data service.
-/// Reads live sensor data pushed by ESP32 to Supabase Realtime.
+/// Reads live sensor data pushed by ESP8266 to Supabase Realtime.
 class SensorService {
   // ─── Real-Time Sensor Stream from Supabase Realtime ─────────────────────
 
-  /// Live stream of all sensor readings from ESP32.
+  /// Live stream of all sensor readings from ESP8266.
   Stream<SensorReading> sensorDataStream() {
     return supabase
         .from('sensor_readings')
@@ -30,7 +30,7 @@ class SensorService {
         });
   }
 
-  /// ESP32 controller status stream from Supabase Realtime.
+  /// ESP8266 controller status stream from Supabase Realtime.
   Stream<Esp32StatusData> esp32StatusStream() {
     return supabase
         .from('esp32_status')
@@ -46,8 +46,7 @@ class SensorService {
   Future<SensorReading> getCurrentReadings() async {
     try {
       final response = await supabase
-          .from('sensor_readings')
-          .select()
+          .rpc('get_all_sensor_readings')
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
@@ -58,7 +57,7 @@ class SensorService {
     }
   }
 
-  /// One-shot read of ESP32 status.
+  /// One-shot read of ESP8266 status.
   Future<Esp32StatusData> getEsp32Status() async {
     try {
       final response = await supabase
@@ -123,7 +122,7 @@ class SensorService {
 
 // ─── Data Classes ──────────────────────────────────────────────────────────
 
-/// Represents a complete set of sensor readings from the ESP32.
+/// Represents a complete set of sensor readings from the ESP8266.
 class SensorReading {
   final double temperature;
   final double pressure;
@@ -184,7 +183,7 @@ class SensorReading {
       };
 }
 
-/// ESP32 controller status data.
+/// ESP8266 controller status data.
 class Esp32StatusData {
   final bool connected;
   final int wifiSignal;

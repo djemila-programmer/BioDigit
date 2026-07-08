@@ -9,19 +9,33 @@ import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 class UserProfile extends StatelessWidget {
-  const UserProfile({super.key});
+  const UserProfile({super.key, this.showBackButton = true});
+
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
+    return Consumer2<AuthProvider, LocaleProvider>(
+      builder: (context, auth, localeProvider, _) {
         final user = auth.user;
+        final isFrench = localeProvider.isFrench;
+        final isAdmin = user?.role == 'admin';
 
         final cs = Theme.of(context).colorScheme;
         return Scaffold(
           backgroundColor: cs.surface,
-          appBar: const AppHeader(title: 'Profil', showBackButton: true),
-          bottomNavigationBar: const BottomNavBar(currentIndex: 4),
+          appBar: AppBar(
+            backgroundColor: cs.surface,
+            leading: showBackButton
+                ? IconButton(
+                    icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
+            title: Text(isFrench ? 'Profil' : 'Profile', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+            elevation: 0,
+          ),
+          bottomNavigationBar: showBackButton ? null : const BottomNavBar(currentIndex: 4),
           body: SingleChildScrollView(
             child: Column(
               children: [
@@ -44,7 +58,7 @@ class UserProfile extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        user?.fullName.isNotEmpty == true ? user!.fullName : 'Utilisateur',
+                        user?.fullName.isNotEmpty == true ? user!.fullName : (isFrench ? 'Utilisateur' : 'User'),
                         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white),
                       ),
                       const SizedBox(height: 4),
@@ -54,7 +68,7 @@ class UserProfile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        user?.farmName ?? 'Ferme non renseignée',
+                        user?.farmName ?? (isFrench ? 'Ferme non renseignée' : 'No farm specified'),
                         style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)),
                       ),
                     ],
@@ -65,15 +79,15 @@ class UserProfile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionTitle('Contact'),
+                      _sectionTitle(isFrench ? 'Contact' : 'Contact'),
                       const SizedBox(height: 12),
                       _infoCard([
                         _infoRow(Icons.email, 'Email', user?.email ?? ''),
-                        _infoRow(Icons.phone, 'Téléphone', user?.phone.isNotEmpty == true ? user!.phone : 'Non renseigné'),
-                        _infoRow(Icons.badge, 'ID', user?.id ?? ''),
+                        _infoRow(Icons.phone, isFrench ? 'Téléphone' : 'Phone', user?.phone.isNotEmpty == true ? user!.phone : (isFrench ? 'Non renseigné' : 'Not specified')),
+                        if (isAdmin) _infoRow(Icons.badge, 'ID', user?.id ?? ''),
                       ]),
                       const SizedBox(height: 24),
-                      _sectionTitle('Aperçu de la ferme'),
+                      _sectionTitle(isFrench ? 'Aperçu de la ferme' : 'Farm Overview'),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 12,
@@ -81,19 +95,19 @@ class UserProfile extends StatelessWidget {
                         children: [
                           _quickStat('124', 'Cattle', Icons.pets, AppTheme.primary),
                           _quickStat('86', 'Swine', Icons.grid_view, AppTheme.secondary),
-                          _quickStat('2', 'Digesters', Icons.storage, AppTheme.tertiary),
+                          _quickStat('2', isFrench ? 'Digesteurs' : 'Digesters', Icons.storage, AppTheme.tertiary),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      _sectionTitle('Biodigesteur'),
+                      _sectionTitle(isFrench ? 'Biodigesteur' : 'Biodigester'),
                       const SizedBox(height: 12),
                       _biodigesterStats(),
                       const SizedBox(height: 24),
-                      _sectionTitle('Actions'),
+                      _sectionTitle(isFrench ? 'Actions' : 'Actions'),
                       const SizedBox(height: 12),
-                      _actionRow(Icons.analytics, 'Voir les rapports', AppRoutes.reports, AppTheme.primary),
-                      _actionRow(Icons.settings, 'Paramètres', AppRoutes.settings, cs.onSurfaceVariant),
-                      _actionRow(Icons.help_outline, 'Aide & support', '', AppTheme.tertiary),
+                      _actionRow(Icons.analytics, isFrench ? 'Voir les rapports' : 'View reports', AppRoutes.reports, AppTheme.primary),
+                      _actionRow(Icons.settings, isFrench ? 'Paramètres' : 'Settings', AppRoutes.settings, cs.onSurfaceVariant),
+                      _actionRow(Icons.help_outline, isFrench ? 'Aide & support' : 'Help & support', '', AppTheme.tertiary),
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
@@ -104,7 +118,7 @@ class UserProfile extends StatelessWidget {
                             Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
                           },
                           icon: const Icon(Icons.logout, color: AppTheme.error),
-                          label: const Text('Déconnexion', style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.w600)),
+                          label: Text(isFrench ? 'Déconnexion' : 'Sign out', style: const TextStyle(color: AppTheme.error, fontWeight: FontWeight.w600)),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: AppTheme.error, width: 1),
                             padding: const EdgeInsets.symmetric(vertical: 16),

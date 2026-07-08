@@ -67,7 +67,7 @@ class AnomalyService {
     final results = <SensorAnomaly>[];
 
     results.add(_analyzeSensor(
-      name: 'Température', sensorId: 'DS18B20', value: reading.temperature,
+      name: 'Température', sensorId: 'DHT22', value: reading.temperature,
       threshold: _thresholds['temperature']!, unit: '°C',
     ));
     results.add(_analyzeSensor(
@@ -157,7 +157,7 @@ class AnomalyService {
     final actions = <RecommendedAction>[];
     for (final r in results) {
       if (r.severity == 'critical') {
-        if (r.sensorId == 'DS18B20') {
+        if (r.sensorId == 'DHT22') {
           actions.add(RecommendedAction(title: 'Réduire la température immédiatement', description: 'Vérifier le système de refroidissement et l\'agitation du digesteur.', priority: 'Haute'));
         } else if (r.sensorId == 'BMP280') {
           actions.add(RecommendedAction(title: 'Vérifier la soupape de pression', description: 'La pression est hors limites. Activer la soupape de sécurité manuellement si nécessaire.', priority: 'Haute'));
@@ -170,7 +170,7 @@ class AnomalyService {
         actions.add(RecommendedAction(title: 'Surveiller ${r.sensorName}', description: r.message, priority: 'Moyenne'));
       }
     }
-    actions.add(RecommendedAction(title: 'Calibration périodique des capteurs', description: 'Planifier la calibration des capteurs DS18B20, BMP280, MQ-4 et HC-SR04.', priority: 'Basse'));
+    actions.add(RecommendedAction(title: 'Calibration périodique des capteurs', description: 'Planifier la calibration des capteurs DHT22, BMP280, MQ-4 et HC-SR04.', priority: 'Basse'));
     return actions;
   }
 }

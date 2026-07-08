@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../routes.dart';
 import '../theme/app_theme.dart';
+import '../services/providers.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
 
   const BottomNavBar({super.key, required this.currentIndex});
 
-  static const List<_NavItem> _items = [
-    _NavItem(icon: Icons.home, filledIcon: Icons.home, label: 'Home', route: AppRoutes.mainDashboard),
-    _NavItem(icon: Icons.sensors, filledIcon: Icons.sensors, label: 'Live', route: AppRoutes.liveMonitoring),
-    _NavItem(icon: Icons.notifications_active_outlined, filledIcon: Icons.notifications_active, label: 'Alerts', route: AppRoutes.alerts),
-    _NavItem(icon: Icons.insights_outlined, filledIcon: Icons.insights, label: 'History', route: AppRoutes.history),
-    _NavItem(icon: Icons.person_outline, filledIcon: Icons.person, label: 'Profile', route: AppRoutes.userProfile),
+  static List<_NavItem> _items(bool isFrench) => [
+    _NavItem(icon: Icons.home, filledIcon: Icons.home, label: isFrench ? 'Accueil' : 'Home', route: AppRoutes.mainDashboard),
+    _NavItem(icon: Icons.sensors, filledIcon: Icons.sensors, label: isFrench ? 'Direct' : 'Live', route: AppRoutes.liveMonitoring),
+    _NavItem(icon: Icons.notifications_active_outlined, filledIcon: Icons.notifications_active, label: isFrench ? 'Alertes' : 'Alerts', route: AppRoutes.alerts),
+    _NavItem(icon: Icons.insights_outlined, filledIcon: Icons.insights, label: isFrench ? 'Historique' : 'History', route: AppRoutes.history),
+    _NavItem(icon: Icons.person_outline, filledIcon: Icons.person, label: isFrench ? 'Profil' : 'Profile', route: AppRoutes.userProfile),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final isFrench = context.watch<LocaleProvider>().isFrench;
+    final items = _items(isFrench);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = isDark ? AppTheme.surfaceColor(context) : AppTheme.surface;
     final borderColor = isDark ? AppTheme.borderStrong(context) : AppTheme.outlineVariant.withValues(alpha: 0.2);
@@ -41,8 +45,8 @@ class BottomNavBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_items.length, (index) {
-              final item = _items[index];
+            children: List.generate(items.length, (index) {
+              final item = items[index];
               final isSelected = currentIndex == index;
               return _buildNavItem(context, item, isSelected, index, unselectedColor);
             }),

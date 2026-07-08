@@ -9,7 +9,9 @@ import '../services/providers.dart';
 import '../services/alert_service.dart';
 
 class AlertsScreen extends StatefulWidget {
-  const AlertsScreen({super.key});
+  const AlertsScreen({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<AlertsScreen> createState() => _AlertsScreenState();
@@ -37,10 +39,21 @@ class _AlertsScreenState extends State<AlertsScreen> {
         : allActive.where((a) => a.severity == _filter).toList();
 
     final cs = Theme.of(context).colorScheme;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: const AppHeader(title: 'Alert Management'),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text(isFrench ? 'Gestion des alertes' : 'Alert Management', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
+      ),
+      bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 2),
       body: RefreshIndicator(
         onRefresh: _refreshAlerts,
         child: SingleChildScrollView(

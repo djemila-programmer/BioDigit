@@ -8,7 +8,9 @@ import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.showBackButton = true});
+
+  final bool showBackButton;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -25,8 +27,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         return Scaffold(
           backgroundColor: cs.surface,
-          appBar: AppHeader(title: isFrench ? 'Paramètres' : 'Settings', showBackButton: true),
-          bottomNavigationBar: const BottomNavBar(currentIndex: 4),
+          appBar: AppBar(
+            backgroundColor: cs.surface,
+            leading: widget.showBackButton
+                ? IconButton(
+                    icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
+            title: Text(isFrench ? 'Paramètres' : 'Settings', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+            elevation: 0,
+          ),
+          bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 4),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(AppTheme.containerPadding),
             child: Column(
@@ -73,9 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _sectionTitle(isFrench ? 'Compte' : 'Account', color: cs.onSurfaceVariant),
                 const SizedBox(height: 12),
                 _settingsTile(context, Icons.security, isFrench ? 'Sécurité' : 'Security', isFrench ? 'Mot de passe, session et protection' : 'Password, session and protection', () => Navigator.pushNamed(context, AppRoutes.changePassword)),
-                _settingsTile(context, Icons.wifi, isFrench ? 'Connexion ESP32' : 'ESP32 Connection', isFrench ? 'Connecté · 192.168.1.100' : 'Connected · 192.168.1.100', () {
+                _settingsTile(context, Icons.wifi, isFrench ? 'Connexion ESP8266' : 'ESP8266 Connection', isFrench ? 'Connecté · 192.168.1.100' : 'Connected · 192.168.1.100', () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(isFrench ? 'Les détails de connexion ESP32 sont en lecture seule.' : 'ESP32 connection details are read-only for now.')),
+                    SnackBar(content: Text(isFrench ? 'Les détails de connexion ESP8266 sont en lecture seule.' : 'ESP8266 connection details are read-only for now.')),
                   );
                 }),
                 _settingsTile(context, Icons.notifications_outlined, isFrench ? 'Notifications' : 'Notifications', isFrench ? 'Alertes et notifications push' : 'Alerts and push settings', () => Navigator.pushNamed(context, AppRoutes.notifications)),

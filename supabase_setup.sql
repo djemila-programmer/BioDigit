@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. STATUT ESP32
+-- 3. STATUT ESP8266
 CREATE TABLE IF NOT EXISTS esp32_status (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -170,14 +170,14 @@ CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = 
 DROP POLICY IF EXISTS "profiles_update" ON profiles;
 CREATE POLICY "profiles_update" ON profiles FOR UPDATE USING (auth.uid() = id);
 
--- sensor_readings: l'utilisateur voit ses lectures, ESP32 peut insérer
+-- sensor_readings: l'utilisateur voit ses lectures, ESP8266 peut insérer
 DROP POLICY IF EXISTS "sensor_readings_select" ON sensor_readings;
 CREATE POLICY "sensor_readings_select" ON sensor_readings FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "sensor_readings_insert" ON sensor_readings;
 CREATE POLICY "sensor_readings_insert" ON sensor_readings FOR INSERT WITH CHECK (true);
 
--- esp32_status: tout le monde peut lire et insérer (pour ESP32)
+-- esp32_status: tout le monde peut lire et insérer (pour ESP8266)
 DROP POLICY IF EXISTS "esp32_status_select" ON esp32_status;
 CREATE POLICY "esp32_status_select" ON esp32_status FOR SELECT USING (true);
 

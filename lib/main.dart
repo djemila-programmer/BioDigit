@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:app_links/app_links.dart';
 
 import 'supabase.dart';
 import 'theme/app_theme.dart';
@@ -28,6 +29,14 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env');
 
   await initSupabase();
+
+  // ── Deep link listener for password reset ──
+  final appLinks = AppLinks();
+  appLinks.uriLinkStream.listen((uri) {
+    if (uri.toString().contains('reset-password')) {
+      supabase.auth.recoverSession(uri.fragment.isEmpty ? uri.query : uri.fragment);
+    }
+  });
 
   final cacheService = CacheService();
   await cacheService.initialize();

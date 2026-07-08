@@ -4,9 +4,10 @@ import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/providers.dart';
-
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  const HistoryScreen({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -49,15 +50,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     final cs = Theme.of(context).colorScheme;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: const AppHeader(title: 'Historique & Statistiques'),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text(isFrench ? 'Historique & Statistiques' : 'History & Statistics', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
+      ),
+      bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 3),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Export des donnees en cours...'),
+            SnackBar(
+              content: Text(isFrench ? 'Export des données en cours...' : 'Exporting data...'),
               backgroundColor: AppTheme.primary,
             ),
           );
@@ -65,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         backgroundColor: AppTheme.primary,
         foregroundColor: AppTheme.onPrimary,
         icon: const Icon(Icons.download),
-        label: const Text('Exporter'),
+        label: Text(isFrench ? 'Exporter' : 'Export'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
@@ -93,19 +105,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(9999),
                     ),
-                    child: const Text(
-                      'STATISTIQUES',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1),
+                    child: Text(
+                      isFrench ? 'STATISTIQUES' : 'STATISTICS',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Resume des mesures',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white),
+                  Text(
+                    isFrench ? 'Résumé des mesures' : 'Measurements Summary',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${data.length} mesures enregistrees',
+                    isFrench ? '${data.length} mesures enregistrées' : '${data.length} readings recorded',
                     style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.85)),
                   ),
                   const SizedBox(height: 16),
@@ -114,7 +126,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     runSpacing: 8,
                     children: [
                       _HistoryBadge(label: '$anomalyCount anomalies', icon: Icons.notifications_active),
-                      _HistoryBadge(label: '${data.length} mesures', icon: Icons.shield_outlined),
+                      _HistoryBadge(label: isFrench ? '${data.length} mesures' : '${data.length} readings', icon: Icons.shield_outlined),
                       _HistoryBadge(label: historyProv.selectedRange.toUpperCase(), icon: Icons.access_time),
                     ],
                   ),
@@ -128,10 +140,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                {'key': '24h', 'label': '24 Heures'},
-                {'key': '7d', 'label': '7 Jours'},
-                {'key': '30d', 'label': '30 Jours'},
-                {'key': '12m', 'label': '12 Mois'},
+                {'key': '24h', 'label': isFrench ? '24 Heures' : '24 Hours'},
+                {'key': '7d', 'label': isFrench ? '7 Jours' : '7 Days'},
+                {'key': '30d', 'label': isFrench ? '30 Jours' : '30 Days'},
+                {'key': '12m', 'label': isFrench ? '12 Mois' : '12 Months'},
               ].map((period) {
                 final selected = _selectedRange == period['key'];
                 return GestureDetector(
@@ -172,7 +184,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   childAspectRatio: narrow ? 2.1 : 1.0,
                   children: [
                     _BentoCard(
-                      title: 'Temperature moyenne',
+                      title: isFrench ? 'Température moyenne' : 'Avg Temperature',
                       value: avgTemp > 0 ? avgTemp.toStringAsFixed(1) : '--',
                       unit: '\u00b0C',
                       icon: Icons.thermostat,
@@ -182,7 +194,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: _MiniLineChart(color: AppTheme.primary, data: data.map((d) => d.temperature).toList()),
                     ),
                     _BentoCard(
-                      title: 'Methane moyen',
+                      title: isFrench ? 'Méthane moyen' : 'Avg Methane',
                       value: avgMethane > 0 ? avgMethane.toStringAsFixed(0) : '--',
                       unit: 'ppm',
                       icon: Icons.gas_meter,
@@ -192,7 +204,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: _MiniBarChart(color: AppTheme.secondary, data: data.map((d) => d.methane).toList()),
                     ),
                     _BentoCard(
-                      title: 'Pression moyenne',
+                      title: isFrench ? 'Pression moyenne' : 'Avg Pressure',
                       value: avgPressure > 0 ? avgPressure.toStringAsFixed(2) : '--',
                       unit: 'bar',
                       icon: Icons.speed,
@@ -202,7 +214,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: _MiniLineChart(color: AppTheme.tertiary, data: data.map((d) => d.pressure).toList()),
                     ),
                     _BentoCard(
-                      title: 'Niveau moyen',
+                      title: isFrench ? 'Niveau moyen' : 'Avg Level',
                       value: avgLevel > 0 ? avgLevel.toStringAsFixed(1) : '--',
                       unit: '%',
                       icon: Icons.height,
@@ -222,12 +234,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Journal des anomalies ($anomalyCount)',
+                  isFrench ? 'Journal des anomalies ($anomalyCount)' : 'Anomaly Journal ($anomalyCount)',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/anomaly-detection'),
-                  child: const Text('Voir tout'),
+                  child: Text(isFrench ? 'Voir tout' : 'View all'),
                 ),
               ],
             ),
@@ -242,12 +254,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
                 ),
                 child: Center(
-                  child: Text('Aucune anomalie enregistree pour cette periode.', style: TextStyle(color: cs.onSurfaceVariant)),
+                  child: Text(isFrench ? 'Aucune anomalie enregistrée pour cette période.' : 'No anomalies recorded for this period.', style: TextStyle(color: cs.onSurfaceVariant)),
                 ),
               )
             else
               ...anomalyProv.history.take(5).map((entry) {
-                final severity = entry['severity_level']?.toString() ?? 'Inconnu';
+                final severity = entry['severity_level']?.toString() ?? (isFrench ? 'Inconnu' : 'Unknown');
                 final healthScore = entry['health_score']?.toString() ?? '--';
                 final timestamp = entry['timestampDate'];
                 final dateStr = timestamp is DateTime ? _formatDateTime(timestamp) : '--';
@@ -269,7 +281,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
                 return _logEntry(
                   severity == 'Critique' ? Icons.error : severity == 'Eleve' ? Icons.warning : Icons.info,
-                  'Severite: $severity - Sante: $healthScore%',
+                  isFrench ? 'Sévérité: $severity - Santé: $healthScore%' : 'Severity: $severity - Health: $healthScore%',
                   dateStr,
                   severityColor,
                 );
@@ -278,7 +290,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
             // Activity log from real history data
             Text(
-              'Activite recente',
+              isFrench ? 'Activité récente' : 'Recent Activity',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface),
             ),
             const SizedBox(height: 12),

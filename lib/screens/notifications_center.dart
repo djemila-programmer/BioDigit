@@ -4,7 +4,9 @@ import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 class NotificationsCenter extends StatefulWidget {
-  const NotificationsCenter({super.key});
+  const NotificationsCenter({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<NotificationsCenter> createState() => _NotificationsCenterState();
@@ -57,14 +59,14 @@ class _NotificationsCenterState extends State<NotificationsCenter> {
     _Notification(
       icon: Icons.check_circle,
       title: 'Sensor Calibration Complete',
-      subtitle: 'DS18B20 recalibrated successfully',
+      subtitle: 'DHT22 recalibrated successfully',
       time: '1 hour ago',
       type: 'info',
       unread: false,
     ),
     _Notification(
       icon: Icons.wifi,
-      title: 'Sensor Status: ESP32 Reconnected',
+      title: 'Sensor Status: ESP8266 Reconnected',
       subtitle: 'Wi-Fi connection restored after 3 min interruption',
       time: '2 hours ago',
       type: 'info',
@@ -81,7 +83,7 @@ class _NotificationsCenterState extends State<NotificationsCenter> {
     _Notification(
       icon: Icons.update,
       title: 'System Update Available',
-      subtitle: 'ESP32 firmware v2.4.1 ready',
+      subtitle: 'ESP8266 firmware v2.4.1 ready',
       time: '3 hours ago',
       type: 'info',
       unread: true,
@@ -113,8 +115,16 @@ class _NotificationsCenterState extends State<NotificationsCenter> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: AppHeader(
-        title: 'Notifications',
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text('Notifications', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
         actions: [
           TextButton(
             onPressed: () {
@@ -131,7 +141,7 @@ class _NotificationsCenterState extends State<NotificationsCenter> {
           ),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
+      bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 2),
       body: Column(
         children: [
           // Tabs

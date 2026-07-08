@@ -15,8 +15,7 @@ class AlertService {
   /// Get all active alerts (one-shot).
   Future<List<SmartAlert>> getAlerts({int limit = 50}) async {
     final response = await supabase
-        .from('alerts')
-        .select()
+        .rpc('get_all_alerts')
         .order('created_at', ascending: false)
         .limit(limit);
     return response.map((row) => SmartAlert.fromSupabase(row)).toList();
@@ -67,11 +66,10 @@ class AlertService {
 
   Future<Map<String, int>> getAlertCounts() async {
     final response = await supabase
-        .from('alerts')
-        .select('severity')
-        .eq('resolved', false);
+        .rpc('get_all_alerts');
     int critical = 0, warning = 0, info = 0;
     for (final row in response) {
+      if (row['resolved'] == true) continue;
       final severity = row['severity'] as String?;
       if (severity == 'critical') {
         critical++;
@@ -94,12 +92,12 @@ class AlertService {
       await createAlert(
         title: 'Température critique: ${temperature.toStringAsFixed(1)}°C',
         description: 'La température a dépassé le seuil maximum de 40°C.',
-        severity: 'critical', sensorId: 'DS18B20', location: 'Chambre principale');
+        severity: 'critical', sensorId: 'DHT22', location: 'Chambre principale');
     } else if (temperature < 25) {
       await createAlert(
         title: 'Température basse: ${temperature.toStringAsFixed(1)}°C',
         description: 'La température est en dessous du seuil minimum de 25°C.',
-        severity: 'warning', sensorId: 'DS18B20', location: 'Chambre principale');
+        severity: 'warning', sensorId: 'DHT22', location: 'Chambre principale');
     }
     if (pressure > 1.5) {
       await createAlert(

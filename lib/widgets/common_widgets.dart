@@ -234,12 +234,13 @@ class TrendIndicator extends StatelessWidget {
   }
 }
 
-/// ESP32 Controller Status Card
-class ESP32StatusCard extends StatelessWidget {
-  const ESP32StatusCard({super.key});
+/// ESP8266 Controller Status Card
+class ESP8266StatusCard extends StatelessWidget {
+  const ESP8266StatusCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Consumer<SensorProvider>(
       builder: (context, sensorProv, _) {
         final esp = sensorProv.esp32Status;
@@ -274,7 +275,7 @@ class ESP32StatusCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'ESP32 Controller',
+                      'ESP8266 Controller',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.text(context)),
                     ),
                   ),
@@ -285,7 +286,7 @@ class ESP32StatusCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
-                      isSimulation ? 'SIMULATION' : (isConnected ? 'CONNECTE' : 'DECONNECTE'),
+                      isSimulation ? 'SIMULATION' : (isConnected ? (isFrench ? 'CONNECTÉ' : 'CONNECTED') : (isFrench ? 'DÉCONNECTÉ' : 'DISCONNECTED')),
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSimulation ? const Color(0xFFF57F17) : const Color(0xFF1B5E20)),
                     ),
                   ),
@@ -294,9 +295,9 @@ class ESP32StatusCard extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  _espItem(context, Icons.wifi, 'Wi-Fi Signal', isConnected ? 'Excellent' : 'N/A'),
+                  _espItem(context, Icons.wifi, isFrench ? 'Signal Wi-Fi' : 'Wi-Fi Signal', isConnected ? 'Excellent' : 'N/A'),
                   const SizedBox(width: 16),
-                  _espItem(context, Icons.sync, 'Last Sync', isConnected ? 'Now' : '--'),
+                  _espItem(context, Icons.sync, isFrench ? 'Dernière synchro' : 'Last Sync', isConnected ? (isFrench ? 'Maintenant' : 'Now') : '--'),
                 ],
               ),
               const SizedBox(height: 8),
@@ -304,13 +305,13 @@ class ESP32StatusCard extends StatelessWidget {
                 children: [
                   _espItem(context, Icons.settings_applications, 'Firmware', esp?.firmwareVersion ?? 'v2.4.1-bf'),
                   const SizedBox(width: 16),
-                  _espItem(context, Icons.battery_charging_full, 'Battery', esp != null ? '${esp.batteryLevel}%' : 'N/A'),
+                  _espItem(context, Icons.battery_charging_full, isFrench ? 'Batterie' : 'Battery', esp != null ? '${esp.batteryLevel}%' : 'N/A'),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _espItem(context, Icons.lan, 'IP Address', esp?.ipAddress ?? '192.168.1.100'),
+                  _espItem(context, Icons.lan, isFrench ? 'Adresse IP' : 'IP Address', esp?.ipAddress ?? '192.168.1.100'),
                   const SizedBox(width: 16),
                   _espItem(context, Icons.timer, 'Uptime', esp?.uptime ?? '--'),
                 ],
@@ -350,6 +351,7 @@ class SupabaseStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Consumer<SensorProvider>(
       builder: (context, sensorProv, _) {
         final isConnected = sensorProv.isOnline;
@@ -394,7 +396,7 @@ class SupabaseStatusCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
-                      (isConnected ? 'CONNECTE' : 'DECONNECTE').toUpperCase(),
+                      (isConnected ? (isFrench ? 'CONNECTÉ' : 'CONNECTED') : (isFrench ? 'DÉCONNECTÉ' : 'DISCONNECTED')),
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isConnected ? const Color(0xFF262F89) : AppTheme.error),
                     ),
                   ),
@@ -403,17 +405,17 @@ class SupabaseStatusCard extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  _fbItem(context, Icons.cloud_done, 'Cloud Sync', isConnected ? 'Actif' : 'Inactif'),
+                  _fbItem(context, Icons.cloud_done, isFrench ? 'Synchro Cloud' : 'Cloud Sync', isConnected ? (isFrench ? 'Actif' : 'Active') : (isFrench ? 'Inactif' : 'Inactive')),
                   const SizedBox(width: 16),
-                  _fbItem(context, Icons.upload, 'Mode', isSimulation ? 'Simulation' : 'Temps reel'),
+                  _fbItem(context, Icons.upload, isFrench ? 'Mode' : 'Mode', isSimulation ? 'Simulation' : (isFrench ? 'Temps réel' : 'Real-time')),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _fbItem(context, Icons.verified, 'Integrite', isConnected ? '100% Verifie' : '--'),
+                  _fbItem(context, Icons.verified, isFrench ? 'Intégrité' : 'Integrity', isConnected ? (isFrench ? '100% Vérifié' : '100% Verified') : '--'),
                   const SizedBox(width: 16),
-                  _fbItem(context, Icons.storage, 'Source', isSimulation ? 'Jumeau numerique' : 'ESP32'),
+                  _fbItem(context, Icons.storage, isFrench ? 'Source' : 'Source', isSimulation ? (isFrench ? 'Jumeau numérique' : 'Digital Twin') : 'ESP8266'),
                 ],
               ),
             ],
@@ -642,7 +644,7 @@ class _BiodigesterIllustrationPainter extends CustomPainter {
     canvas.drawCircle(Offset(size.width * 0.42, size.height * 0.55), 3, sensorPaint);
     canvas.drawCircle(Offset(size.width * 0.48, size.height * 0.70), 3, sensorPaint);
 
-    // ESP32 box (bottom right)
+    // ESP8266 box (bottom right)
     final espRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(size.width * 0.78, size.height * 0.30, size.width * 0.12, size.height * 0.15),
       const Radius.circular(4),
@@ -686,6 +688,7 @@ class BiogasProductionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Consumer<HistoryProvider>(
       builder: (context, historyProv, _) {
         final prod = historyProv.production;
@@ -704,7 +707,7 @@ class BiogasProductionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'PRODUCTION DE BIOGAZ',
+                isFrench ? 'PRODUCTION DE BIOGAZ' : 'BIOGAS PRODUCTION',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -727,7 +730,7 @@ class BiogasProductionCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'm\u00b3/jour',
+                    isFrench ? 'm\u00b3/jour' : 'm\u00b3/day',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w500,
@@ -739,11 +742,11 @@ class BiogasProductionCard extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  _prodStat('Energie', '${energy.toStringAsFixed(1)} kWh'),
+                  _prodStat(isFrench ? 'Énergie' : 'Energy', '${energy.toStringAsFixed(1)} kWh'),
                   const SizedBox(width: 16),
-                  _prodStat('CO2 reduit', '${co2.toStringAsFixed(2)} kg'),
+                  _prodStat(isFrench ? 'CO2 réduit' : 'CO2 reduced', '${co2.toStringAsFixed(2)} kg'),
                   const SizedBox(width: 16),
-                  _prodStat('Efficacite', '${efficiency.toStringAsFixed(1)}%'),
+                  _prodStat(isFrench ? 'Efficacité' : 'Efficiency', '${efficiency.toStringAsFixed(1)}%'),
                 ],
               ),
               const SizedBox(height: 16),
@@ -752,7 +755,9 @@ class BiogasProductionCard extends StatelessWidget {
                   const Icon(Icons.trending_up, size: 16, color: AppTheme.onPrimaryContainer),
                   const SizedBox(width: 4),
                   Text(
-                    '${prod?.readingCount ?? 0} mesures - Periode: ${prod?.period ?? '--'}',
+                    isFrench
+                        ? '${prod?.readingCount ?? 0} mesures - Période: ${prod?.period ?? '--'}'
+                        : '${prod?.readingCount ?? 0} readings - Period: ${prod?.period ?? '--'}',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.onPrimaryContainer.withValues(alpha: 0.9),
@@ -784,6 +789,7 @@ class EnergyImpactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Consumer<HistoryProvider>(
       builder: (context, historyProv, _) {
         final prod = historyProv.production;
@@ -803,23 +809,23 @@ class EnergyImpactCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Impact energetique & environnemental',
+                isFrench ? 'Impact énergétique & environnemental' : 'Energy & Environmental Impact',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  _impactItem(context, Icons.bolt, 'Energie generee', '${energy.toStringAsFixed(1)} kWh', AppTheme.primary),
+                  _impactItem(context, Icons.bolt, isFrench ? 'Énergie générée' : 'Energy generated', '${energy.toStringAsFixed(1)} kWh', AppTheme.primary),
                   const SizedBox(width: 12),
-                  _impactItem(context, Icons.eco, 'Reduction CO2', '${co2.toStringAsFixed(2)} kg', const Color(0xFF2E7D32)),
+                  _impactItem(context, Icons.eco, isFrench ? 'Réduction CO2' : 'CO2 reduction', '${co2.toStringAsFixed(2)} kg', const Color(0xFF2E7D32)),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _impactItem(context, Icons.percent, 'Efficacite', '${efficiency.toStringAsFixed(1)}%', AppTheme.tertiary),
+                  _impactItem(context, Icons.percent, isFrench ? 'Efficacité' : 'Efficiency', '${efficiency.toStringAsFixed(1)}%', AppTheme.tertiary),
                   const SizedBox(width: 12),
-                  _impactItem(context, Icons.storage, 'Mesures', '$readingCount', AppTheme.secondary),
+                  _impactItem(context, Icons.storage, isFrench ? 'Mesures' : 'Readings', '$readingCount', AppTheme.secondary),
                 ],
               ),
             ],

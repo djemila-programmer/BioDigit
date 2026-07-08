@@ -20,7 +20,7 @@ class FarmService {
   }) async {
     if (_uid == null) throw Exception('Non connecté.');
     final response = await supabase.from('farms').insert({
-      'owner_id': _uid,
+      'user_id': _uid,
       'name': name,
       'location': location,
       'biodigester_type': biodigesterType,
@@ -41,7 +41,7 @@ class FarmService {
     final response = await supabase
         .from('farms')
         .select()
-        .eq('owner_id', _uid!);
+        .eq('user_id', _uid!);
     return response.map((row) => FarmData.fromSupabase(row)).toList();
   }
 
@@ -96,14 +96,14 @@ class FarmService {
   // ─── Admin: All Farms ───────────────────────────────────────────────────
 
   Future<List<FarmData>> getAllFarms() async {
-    final response = await supabase.from('farms').select();
+    final response = await supabase.rpc('get_all_farms');
     return response.map((row) => FarmData.fromSupabase(row)).toList();
   }
 
   Future<Map<String, dynamic>> getSystemStats() async {
-    final farmsResponse = await supabase.from('farms').select();
-    final usersResponse = await supabase.from('profiles').select('id');
-    final alertsResponse = await supabase.from('alerts').select('id').eq('resolved', false);
+    final farmsResponse = await supabase.rpc('get_all_farms');
+    final usersResponse = await supabase.rpc('get_all_profiles');
+    final alertsResponse = await supabase.rpc('get_all_alerts').eq('resolved', false);
 
     int totalCows = 0, totalPigs = 0;
     double totalEnergy = 0, totalWaste = 0;
@@ -163,7 +163,7 @@ class FarmData {
   factory FarmData.fromSupabase(Map<String, dynamic> data) {
     return FarmData(
       id: data['id']?.toString() ?? '',
-      ownerId: data['owner_id']?.toString() ?? '',
+      ownerId: data['user_id']?.toString() ?? '',
       name: data['name']?.toString() ?? '',
       location: data['location']?.toString() ?? '',
       biodigesterType: data['biodigester_type']?.toString() ?? '',
@@ -182,7 +182,7 @@ class FarmData {
   }
 
   Map<String, dynamic> toJson() => {
-        'owner_id': ownerId,
+        'user_id': ownerId,
         'name': name,
         'location': location,
         'biodigester_type': biodigesterType,

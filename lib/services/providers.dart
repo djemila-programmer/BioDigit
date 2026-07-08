@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../supabase.dart';
 import '../services/auth_service.dart';
 
 import '../services/sensor_service.dart';
@@ -218,7 +219,7 @@ class AuthProvider extends ChangeNotifier {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Sensor Provider (real-time data from ESP32 via Supabase Realtime)
+// Sensor Provider (real-time data from ESP8266 via Supabase Realtime)
 // ═══════════════════════════════════════════════════════════════════════════
 
 class SensorProvider extends ChangeNotifier {
@@ -253,14 +254,14 @@ class SensorProvider extends ChangeNotifier {
   bool get isSimulation => _isSimulation;
 
   /// Start listening to real-time sensor data.
-  /// Shows empty state until a real ESP32 connects and pushes data.
+  /// Shows empty state until a real ESP8266 connects and pushes data.
   void startListening() {
     _isLoading = true;
     notifyListeners();
 
     _sensorSub = _sensorService.sensorDataStream().listen(
       (reading) async {
-        // Real data arrived from ESP32
+        // Real data arrived from ESP8266
         if (_isSimulation) {
           _simulationService.stop();
           _isSimulation = false;
@@ -293,7 +294,8 @@ class SensorProvider extends ChangeNotifier {
     Future.delayed(const Duration(seconds: 3), () {
       if (_latestReading == null || _latestReading!.temperature == 0) {
         _isLoading = false;
-        _isSimulation = false;
+        _isSimulation = true;
+        _simulationService.start(intervalSeconds: 5);
         notifyListeners();
       }
     });
@@ -504,13 +506,35 @@ class FarmProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      _farms = await _farmService.getUserFarms();
+      // Check if user is admin - if so, load all farms
+      final userRole = supabase.auth.currentUser != null 
+          ? await _getUserRole() 
+          : 'user';
+      
+      if (userRole == 'admin') {
+        _farms = await _farmService.getAllFarms();
+      } else {
+        _farms = await _farmService.getUserFarms();
+      }
       _error = null;
     } catch (e) {
       _error = e.toString();
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<String> _getUserRole() async {
+    try {
+      final response = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', supabase.auth.currentUser!.id)
+          .maybeSingle();
+      return response?['role'] as String? ?? 'user';
+    } catch (_) {
+      return 'user';
+    }
   }
 
   Future<void> loadSystemStats() async {

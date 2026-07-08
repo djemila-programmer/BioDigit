@@ -5,7 +5,9 @@ import '../widgets/app_header.dart';
 import '../services/providers.dart';
 
 class AnomalyDetection extends StatefulWidget {
-  const AnomalyDetection({super.key});
+  const AnomalyDetection({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<AnomalyDetection> createState() => _AnomalyDetectionState();
@@ -27,6 +29,7 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     final anomalyProvider = context.watch<AnomalyProvider>();
     final report = anomalyProvider.report;
     final healthScore = report?.healthScore ?? 0;
@@ -34,11 +37,21 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
     final confidence = report?.predictionConfidence ?? 0.0;
     final sensorAnomalies = report?.sensorAnomalies ?? 0;
     final recommendedActions = report?.recommendedActions ?? 0;
-    final severityLabel = report?.severityLevel ?? 'En attente';
+    final severityLabel = report?.severityLevel ?? (isFrench ? 'En attente' : 'Waiting');
 
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: const AppHeader(title: 'Detection d\'anomalies'),
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text(isFrench ? 'Détection d\'anomalies' : 'Anomaly Detection', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(
@@ -114,8 +127,8 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
                   const SizedBox(height: 12),
                   Text(
                     report == null
-                        ? 'En attente de donnees capteur pour generer une analyse.'
-                        : 'Derniere analyse: ${_formatTime(report.timestamp)}',
+                        ? (isFrench ? 'En attente de données capteur pour générer une analyse.' : 'Waiting for sensor data to generate analysis.')
+                        : (isFrench ? 'Dernière analyse: ${_formatTime(report.timestamp)}' : 'Last analysis: ${_formatTime(report.timestamp)}'),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.8),
@@ -131,9 +144,9 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
               children: [
                 Expanded(
                   child: _scoreCard(
-                    'Score de risque',
+                    isFrench ? 'Score de risque' : 'Risk Score',
                     '$riskScore%',
-                    riskScore > 70 ? 'Eleve' : riskScore > 35 ? 'Moyen' : 'Faible',
+                    riskScore > 70 ? (isFrench ? 'Élevé' : 'High') : riskScore > 35 ? (isFrench ? 'Moyen' : 'Medium') : (isFrench ? 'Faible' : 'Low'),
                     Icons.shield,
                     riskScore > 70 ? AppTheme.error : riskScore > 35 ? const Color(0xFFF57F17) : const Color(0xFF1B5E20),
                     riskScore / 100,
@@ -142,9 +155,9 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _scoreCard(
-                    'Confiance de detection',
+                    isFrench ? 'Confiance de détection' : 'Detection Confidence',
                     '${confidence.toStringAsFixed(1)}%',
-                    confidence > 90 ? 'Elevee' : 'A verifier',
+                    confidence > 90 ? (isFrench ? 'Élevée' : 'High') : (isFrench ? 'À vérifier' : 'To verify'),
                     Icons.auto_graph,
                     AppTheme.tertiary,
                     confidence / 100,
@@ -157,9 +170,9 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
               children: [
                 Expanded(
                   child: _scoreCard(
-                    'Anomalies capteurs',
+                    isFrench ? 'Anomalies capteurs' : 'Sensor Anomalies',
                     '$sensorAnomalies',
-                    sensorAnomalies > 0 ? 'Detectees' : 'Aucune',
+                    sensorAnomalies > 0 ? (isFrench ? 'Détectées' : 'Detected') : (isFrench ? 'Aucune' : 'None'),
                     Icons.sensors,
                     AppTheme.secondary,
                     (sensorAnomalies / 10).clamp(0.0, 1.0),
@@ -168,9 +181,9 @@ class _AnomalyDetectionState extends State<AnomalyDetection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _scoreCard(
-                    'Actions recommandees',
+                    isFrench ? 'Actions recommandées' : 'Recommended Actions',
                     '$recommendedActions',
-                    recommendedActions > 0 ? 'En attente' : 'OK',
+                    recommendedActions > 0 ? (isFrench ? 'En attente' : 'Pending') : 'OK',
                     Icons.assignment,
                     const Color(0xFFF57F17),
                     (recommendedActions / 10).clamp(0.0, 1.0),

@@ -11,7 +11,9 @@ import '../services/anomaly_service.dart';
 import '../services/providers.dart';
 
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+  const ReportsScreen({super.key, this.showBackButton = true});
+
+  final bool showBackButton;
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -123,8 +125,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: const AppHeader(title: 'Reports', showBackButton: true),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: cs.onSurface),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text('Reports', style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600)),
+        elevation: 0,
+      ),
+      bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 3),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.containerPadding),
         child: Column(
@@ -252,19 +264,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.picture_as_pdf),
                 label: Text(_isGenerating ? 'Generating...' : 'Export PDF'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isGenerating ? null : _generateExcel,
-                icon: const Icon(Icons.table_chart),
-                label: Text(_isGenerating ? 'Generating...' : 'Export Excel'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF1B5E20),
-                ),
               ),
             ),
             const SizedBox(height: 12),
