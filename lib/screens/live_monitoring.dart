@@ -123,6 +123,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
   Widget _buildConnectionBar(SensorProvider sensorProv) {
     final isOnline = sensorProv.isOnline;
     final isLoading = sensorProv.isLoading;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     final cs = Theme.of(context).colorScheme;
 
     return Container(
@@ -146,7 +147,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
               ),
             ),
             Text(
-              isOnline ? 'Connected' : 'Offline',
+              isOnline ? (isFrench ? 'Connecté' : 'Connected') : (isFrench ? 'Hors ligne' : 'Offline'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -285,9 +286,11 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
     return Consumer<SensorProvider>(
       builder: (context, sensorProv, _) {
         final reading = sensorProv.latestReading;
+        final isFrench = context.watch<LocaleProvider>().isFrench;
+        final nowText = isFrench ? 'Maintenant' : 'Now';
         final gauges = [
           _GaugeData(
-            'Temperature',
+            isFrench ? 'Température' : 'Temperature',
             reading != null ? reading.temperature.toStringAsFixed(1) : '--',
             '\u00b0C',
             AppTheme.primary,
@@ -295,10 +298,10 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             reading != null ? ((reading.temperature - 25) / 15).clamp(0.0, 1.0) : 0.0,
             'DHT22',
             reading?.temperatureTrend ?? 'stable',
-            reading != null ? 'Now' : '--',
+            reading != null ? nowText : '--',
           ),
           _GaugeData(
-            'Pressure',
+            isFrench ? 'Pression' : 'Pressure',
             reading != null ? reading.pressure.toStringAsFixed(2) : '--',
             'BAR',
             AppTheme.tertiary,
@@ -306,10 +309,10 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             reading != null ? ((reading.pressure - 0.8) / 0.7).clamp(0.0, 1.0) : 0.0,
             'BMP280',
             reading?.pressureTrend ?? 'stable',
-            reading != null ? 'Now' : '--',
+            reading != null ? nowText : '--',
           ),
           _GaugeData(
-            'Methane',
+            isFrench ? 'Méthane' : 'Methane',
             reading != null ? reading.methane.toStringAsFixed(0) : '--',
             'ppm',
             AppTheme.primaryContainer,
@@ -317,10 +320,10 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             reading != null ? ((reading.methane - 150) / 350).clamp(0.0, 1.0) : 0.0,
             'MQ-4',
             reading?.methaneTrend ?? 'stable',
-            reading != null ? 'Now' : '--',
+            reading != null ? nowText : '--',
           ),
           _GaugeData(
-            'Niveau',
+            isFrench ? 'Niveau' : 'Level',
             reading != null ? reading.slurryLevel.toStringAsFixed(1) : '--',
             '%',
             AppTheme.secondary,
@@ -328,7 +331,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             reading != null ? (reading.slurryLevel / 100).clamp(0.0, 1.0) : 0.0,
             'HC-SR04',
             reading?.slurryTrend ?? 'stable',
-            reading != null ? 'Now' : '--',
+            reading != null ? nowText : '--',
           ),
         ];
   
@@ -451,6 +454,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
 
   Widget _buildPredictiveMaintenance() {
     final cs = Theme.of(context).colorScheme;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -458,7 +462,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              context.watch<LocaleProvider>().isFrench ? 'Maintenance préventive' : 'Preventive Maintenance',
+              isFrench ? 'Maintenance préventive' : 'Preventive Maintenance',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
@@ -469,7 +473,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
               onPressed: () {
                 // TODO: Navigate to full maintenance list when available
               },
-              child: Text(context.watch<LocaleProvider>().isFrench ? 'Voir tout' : 'View all'),
+              child: Text(isFrench ? 'Voir tout' : 'View all'),
             ),
           ],
         ),
@@ -514,7 +518,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                         Icon(Icons.calendar_today, size: 10, color: cs.outlineVariant),
                         const SizedBox(width: 4),
                         Text(
-                          'Due: ${item.dueDate}',
+                          '${isFrench ? 'Échéance' : 'Due'}: ${item.dueDate}',
                           style: TextStyle(fontSize: 10, color: cs.outlineVariant),
                         ),
                         const SizedBox(width: 12),
@@ -545,41 +549,46 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
     return Consumer<SensorProvider>(
       builder: (context, sensorProv, _) {
         final cs = Theme.of(context).colorScheme;
+        final isFrench = context.watch<LocaleProvider>().isFrench;
         final reading = sensorProv.latestReading;
+        final updatedText = isFrench ? 'Mis à jour maintenant' : 'Updated now';
+        final waitingText = isFrench ? 'En attente de données...' : 'Waiting for data...';
+        final normalText = isFrench ? 'Normal' : 'Normal';
+        final attentionText = isFrench ? 'Attention' : 'Warning';
         final sensors = [
           {
-            'name': 'DHT22 Temperature Sensor',
-            'status': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? 'Normal' : 'Attention',
+            'name': isFrench ? 'Capteur de température DHT22' : 'DHT22 Temperature Sensor',
+            'status': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? normalText : attentionText,
             'detail': reading != null
-                ? '${reading.temperature.toStringAsFixed(1)}\u00b0C - Mis a jour maintenant'
-                : 'En attente de donnees...',
+                ? '${reading.temperature.toStringAsFixed(1)}\u00b0C - $updatedText'
+                : waitingText,
             'icon': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? Icons.check_circle : Icons.warning,
             'color': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? AppTheme.primary : AppTheme.error,
           },
           {
-            'name': 'MQ-4 Methane Sensor',
-            'status': reading != null && reading.methane >= 150 && reading.methane <= 500 ? 'Normal' : 'Attention',
+            'name': isFrench ? 'Capteur de méthane MQ-4' : 'MQ-4 Methane Sensor',
+            'status': reading != null && reading.methane >= 150 && reading.methane <= 500 ? normalText : attentionText,
             'detail': reading != null
-                ? '${reading.methane.toStringAsFixed(0)} ppm - Mis a jour maintenant'
-                : 'En attente de donnees...',
+                ? '${reading.methane.toStringAsFixed(0)} ppm - $updatedText'
+                : waitingText,
             'icon': reading != null && reading.methane >= 150 && reading.methane <= 500 ? Icons.check_circle : Icons.warning,
             'color': reading != null && reading.methane >= 150 && reading.methane <= 500 ? AppTheme.primary : AppTheme.error,
           },
           {
-            'name': 'BMP280 Pressure Sensor',
-            'status': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? 'Normal' : 'Attention',
+            'name': isFrench ? 'Capteur de pression BMP280' : 'BMP280 Pressure Sensor',
+            'status': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? normalText : attentionText,
             'detail': reading != null
-                ? '${reading.pressure.toStringAsFixed(2)} bar - Mis a jour maintenant'
-                : 'En attente de donnees...',
+                ? '${reading.pressure.toStringAsFixed(2)} bar - $updatedText'
+                : waitingText,
             'icon': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? Icons.check_circle : Icons.info,
             'color': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? AppTheme.primary : AppTheme.secondary,
           },
           {
-            'name': 'HC-SR04 Ultrasonic Sensor',
-            'status': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? 'Normal' : 'Attention',
+            'name': isFrench ? 'Capteur ultrason HC-SR04' : 'HC-SR04 Ultrasonic Sensor',
+            'status': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? normalText : attentionText,
             'detail': reading != null
-                ? '${reading.slurryLevel.toStringAsFixed(1)}% - Mis a jour maintenant'
-                : 'En attente de donnees...',
+                ? '${reading.slurryLevel.toStringAsFixed(1)}% - $updatedText'
+                : waitingText,
             'icon': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? Icons.check_circle : Icons.warning,
             'color': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? AppTheme.primary : AppTheme.error,
           },
@@ -592,7 +601,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Sensor Health',
+              isFrench ? 'Santé des capteurs' : 'Sensor Health',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
@@ -600,7 +609,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
               ),
             ),
             Text(
-              'Mis a jour maintenant',
+              updatedText,
               style: TextStyle(
                 fontSize: 11,
                 color: cs.onSurfaceVariant,
@@ -656,7 +665,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (sensor['status'] == 'Normal')
+                    color: (sensor['status'] == normalText)
                         ? const Color(0xFFE8F5E9)
                         : const Color(0xFFFFF8E1),
                     borderRadius: BorderRadius.circular(9999),
@@ -666,7 +675,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: (sensor['status'] == 'Normal')
+                      color: (sensor['status'] == normalText)
                           ? const Color(0xFF1B5E20)
                           : const Color(0xFFF57F17),
                     ),

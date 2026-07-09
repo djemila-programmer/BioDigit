@@ -17,6 +17,7 @@ import 'screens/farm_management.dart';
 import 'screens/user_profile.dart';
 import 'screens/settings_screen.dart';
 import 'screens/admin_dashboard.dart';
+import 'screens/farm_detail_screen.dart';
 import 'screens/threshold_management.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/change_password_screen.dart';
@@ -46,6 +47,7 @@ class AppRoutes {
   static const String settings = '/settings';
 
   static const String adminDashboard = '/admin-dashboard';
+  static const String farmDetail = '/farm-detail';
   static const String thresholdManagement = '/threshold-management';
 
   static const String forgotPassword = '/forgot-password';
@@ -79,6 +81,7 @@ class AppRoutes {
 
     adminDashboard: (context) =>
         const AuthGuard(role: 'admin', child: AdminDashboard()),
+    farmDetail: (context) => const AuthGuard(child: FarmDetailScreen()),
     thresholdManagement: (context) =>
         const AuthGuard(child: ThresholdManagement()),
 

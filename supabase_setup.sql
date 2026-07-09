@@ -128,6 +128,12 @@ CREATE TABLE IF NOT EXISTS farms (
   size DOUBLE PRECISION DEFAULT 0,
   biodigester_type TEXT DEFAULT '',
   biodigester_capacity DOUBLE PRECISION DEFAULT 0,
+  cows INTEGER DEFAULT 0,
+  pigs INTEGER DEFAULT 0,
+  goats INTEGER DEFAULT 0,
+  poultry INTEGER DEFAULT 0,
+  waste_production DOUBLE PRECISION DEFAULT 0,
+  energy_production DOUBLE PRECISION DEFAULT 0,
   status TEXT DEFAULT 'active',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -315,6 +321,37 @@ INSERT INTO config (key, value) VALUES ('thresholds', '{
   "methane": {"min": 150.0, "max": 500.0, "unit": "ppm"},
   "slurry_level": {"min": 20.0, "max": 90.0, "unit": "%"}
 }') ON CONFLICT (key) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════
+-- FONCTIONS RPC (pour l'admin - contournent le RLS)
+-- ═══════════════════════════════════════════════════════════════
+
+-- Retourne toutes les fermes (admin uniquement)
+CREATE OR REPLACE FUNCTION get_all_farms()
+RETURNS SETOF farms
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM farms ORDER BY created_at DESC;
+$$;
+
+-- Retourne tous les profils (admin uniquement)
+CREATE OR REPLACE FUNCTION get_all_profiles()
+RETURNS SETOF profiles
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM profiles ORDER BY created_at DESC;
+$$;
+
+-- Retourne toutes les alertes (admin uniquement)
+CREATE OR REPLACE FUNCTION get_all_alerts()
+RETURNS SETOF alerts
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM alerts ORDER BY created_at DESC;
+$$;
 
 -- ═══════════════════════════════════════════════════════════════
 -- INDEX (performance)

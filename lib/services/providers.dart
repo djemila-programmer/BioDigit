@@ -511,14 +511,19 @@ class FarmProvider extends ChangeNotifier {
           ? await _getUserRole() 
           : 'user';
       
+      print('FarmProvider.loadFarms: userRole=$userRole');
+      
       if (userRole == 'admin') {
         _farms = await _farmService.getAllFarms();
+        print('FarmProvider.loadFarms: admin, farms loaded=${_farms.length}');
       } else {
         _farms = await _farmService.getUserFarms();
+        print('FarmProvider.loadFarms: user, farms loaded=${_farms.length}');
       }
       _error = null;
     } catch (e) {
       _error = e.toString();
+      print('FarmProvider.loadFarms: ERROR=$e');
     }
     _isLoading = false;
     notifyListeners();

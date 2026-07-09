@@ -209,6 +209,8 @@ class _AdminHomeContentState extends State<_AdminHomeContent> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
+    final farmProvider = context.watch<FarmProvider>();
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -328,7 +330,6 @@ class _AdminHomeContentState extends State<_AdminHomeContent> {
             builder: (context, c) {
               final narrow = c.maxWidth < 480;
 
-              final farmProvider = context.watch<FarmProvider>();
               final farmsCount = farmProvider.farms.length;
 
               final systemStats = farmProvider.systemStats;
@@ -485,6 +486,104 @@ class _AdminHomeContentState extends State<_AdminHomeContent> {
             ),
           ),
           ..._buildManagerRows(context),
+          const SizedBox(height: 24),
+          // Farms list - clickable
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isFrench ? 'Fermes connectées' : 'Connected Farms',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              Text(
+                '${farmProvider.farms.length}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...farmProvider.farms.map((farm) => GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.farmDetail,
+              arguments: {'farmId': farm.id},
+            ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.eco, color: AppTheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          farm.name.isNotEmpty ? farm.name : (isFrench ? 'Ferme sans nom' : 'Unnamed Farm'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          farm.location.isNotEmpty ? farm.location : (isFrench ? 'Localisation inconnue' : 'Unknown location'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: farm.status == 'active'
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    child: Text(
+                      farm.status == 'active'
+                          ? (isFrench ? 'Actif' : 'Active')
+                          : (isFrench ? 'Inactif' : 'Inactive'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: farm.status == 'active'
+                            ? const Color(0xFF1B5E20)
+                            : const Color(0xFFF57F17),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.chevron_right, color: cs.onSurfaceVariant, size: 20),
+                ],
+              ),
+            ),
+          )),
           const SizedBox(height: 24),
           Text(
             'System Configuration',

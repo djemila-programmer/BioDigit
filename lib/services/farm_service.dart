@@ -42,7 +42,7 @@ class FarmService {
         .from('farms')
         .select()
         .eq('user_id', _uid!);
-    return response.map((row) => FarmData.fromSupabase(row)).toList();
+    return (response as List).map((row) => FarmData.fromSupabase(row as Map<String, dynamic>)).toList();
   }
 
   Future<FarmData?> getFarm(String farmId) async {
@@ -97,7 +97,8 @@ class FarmService {
 
   Future<List<FarmData>> getAllFarms() async {
     final response = await supabase.rpc('get_all_farms');
-    return response.map((row) => FarmData.fromSupabase(row)).toList();
+    print('FarmService.getAllFarms: RPC returned ${response.length} rows');
+    return (response as List).map((row) => FarmData.fromSupabase(row as Map<String, dynamic>)).toList();
   }
 
   Future<Map<String, dynamic>> getSystemStats() async {

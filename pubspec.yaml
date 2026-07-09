@@ -72,6 +72,9 @@ dependencies:
   # Deep links (password reset)
   app_links: ^6.4.1
 
+  # HTTP requests (weather API)
+  http: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -7,6 +7,7 @@ import '../widgets/common_widgets.dart';
 import '../models/user_model.dart';
 import '../services/providers.dart';
 import '../services/sensor_service.dart';
+import '../services/weather_service.dart';
 
 class MainDashboard extends StatefulWidget {
   const MainDashboard({super.key});
@@ -16,6 +17,8 @@ class MainDashboard extends StatefulWidget {
 }
 
 class _MainDashboardState extends State<MainDashboard> {
+  WeatherData? _weather;
+
   @override
   void initState() {
     super.initState();
@@ -23,7 +26,15 @@ class _MainDashboardState extends State<MainDashboard> {
       context.read<SensorProvider>().startListening();
       context.read<AlertProvider>().startListening();
       context.read<HistoryProvider>().loadProduction('weekly');
+      _loadWeather();
     });
+  }
+
+  Future<void> _loadWeather() async {
+    final weather = await WeatherService.getOuagaWeather();
+    if (mounted) {
+      setState(() => _weather = weather);
+    }
   }
 
   @override
@@ -212,7 +223,11 @@ class _MainDashboardState extends State<MainDashboard> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.wb_sunny, color: AppTheme.secondary, size: 28),
+              Icon(
+                _weather?.weatherIcon ?? Icons.wb_sunny,
+                color: _weather?.weatherColor ?? AppTheme.secondary,
+                size: 28,
+              ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,11 +241,11 @@ class _MainDashboardState extends State<MainDashboard> {
                     ),
                   ),
                   Text(
-                    '35°C',
+                    _weather != null ? '${_weather!.temperature.round()}°C' : '--°C',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.primary,
+                      color: _weather?.weatherColor ?? AppTheme.primary,
                     ),
                   ),
                 ],
