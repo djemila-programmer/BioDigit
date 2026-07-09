@@ -26,9 +26,7 @@ class _FarmDetailScreenState extends State<FarmDetailScreen> {
   Future<void> _loadFarmData() async {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final farmId = args?['farmId'] as String?;
-    
-    print('FarmDetail: farmId=$farmId, args=$args');
-    
+
     if (farmId == null) {
       setState(() => _isLoading = false);
       return;
@@ -37,23 +35,20 @@ class _FarmDetailScreenState extends State<FarmDetailScreen> {
     try {
       // Load all farms via RPC and filter locally
       final allFarms = await supabase.rpc('get_all_farms');
-      print('FarmDetail: RPC returned ${(allFarms as List).length} farms');
-      
+
       final farmResponse = (allFarms as List)
           .map((f) => f as Map<String, dynamic>)
           .firstWhere(
             (f) => f['id']?.toString() == farmId,
             orElse: () => <String, dynamic>{},
           );
-      
-      print('FarmDetail: farm found: ${farmResponse.isNotEmpty}');
+
       if (farmResponse.isEmpty) {
         setState(() => _isLoading = false);
         return;
       }
       
       final userId = farmResponse['user_id']?.toString();
-      print('FarmDetail: userId=$userId');
 
       // Load latest sensor reading
       Map<String, dynamic>? reading;
@@ -69,7 +64,7 @@ class _FarmDetailScreenState extends State<FarmDetailScreen> {
             reading = readings.first as Map<String, dynamic>;
           }
         } catch (e) {
-          print('FarmDetail: sensor_readings error=$e');
+          // sensor_readings error silently handled
         }
       }
 
@@ -79,7 +74,6 @@ class _FarmDetailScreenState extends State<FarmDetailScreen> {
         try {
           final allProfiles = await supabase.rpc('get_all_profiles');
           final profiles = allProfiles as List;
-          print('FarmDetail: profiles count=${profiles.length}');
           final matchProfile = profiles
               .map((p) => p as Map<String, dynamic>)
               .where((p) => p['id']?.toString() == userId)
@@ -87,9 +81,8 @@ class _FarmDetailScreenState extends State<FarmDetailScreen> {
           if (matchProfile.isNotEmpty) {
             owner = matchProfile.first;
           }
-          print('FarmDetail: owner found: ${owner != null}');
         } catch (e) {
-          print('FarmDetail: profiles error=$e');
+          // profiles error silently handled
         }
       }
 
@@ -102,7 +95,6 @@ class _FarmDetailScreenState extends State<FarmDetailScreen> {
         });
       }
     } catch (e) {
-      print('FarmDetail: ERROR=$e');
       if (mounted) {
         setState(() => _isLoading = false);
       }

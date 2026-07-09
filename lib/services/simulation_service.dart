@@ -34,7 +34,6 @@ class SimulationService {
     if (_isRunning) return;
     _isRunning = true;
     _tickCount = 0;
-    print('[Simulation] Démarrage (intervalle: ${intervalSeconds}s)');
 
     _pushReading(); // immediate first reading
     _timer = Timer.periodic(Duration(seconds: intervalSeconds), (_) {
@@ -69,9 +68,8 @@ class SimulationService {
         'methane_trend': reading.methaneTrend,
         'slurry_trend': reading.slurryTrend,
       });
-      print('[Simulation] Lecture envoyée: ${reading.temperature}°C');
     } catch (e) {
-      print('[Simulation] ERREUR: $e');
+      // silently handle simulation error
     }
 
     return reading;

@@ -97,7 +97,6 @@ class FarmService {
 
   Future<List<FarmData>> getAllFarms() async {
     final response = await supabase.rpc('get_all_farms');
-    print('FarmService.getAllFarms: RPC returned ${response.length} rows');
     return (response as List).map((row) => FarmData.fromSupabase(row as Map<String, dynamic>)).toList();
   }
 
