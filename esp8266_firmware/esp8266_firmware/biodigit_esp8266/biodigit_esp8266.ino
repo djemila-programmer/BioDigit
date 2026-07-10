@@ -232,7 +232,7 @@ void sendStatus() {
   WiFiClientSecure client;
   client.setInsecure();
   HTTPClient http;
-  String url = String(SUPABASE_URL) + "/rest/v1/esp32_status";
+  String url = String(SUPABASE_URL) + "/rest/v1/esp8266_status";
   
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");

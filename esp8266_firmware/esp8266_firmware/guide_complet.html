@@ -46,9 +46,9 @@
   .wire-purple { background: #6a1b9a; color: white; }
   
   /* Visual Pin Map */
-  .esp32-visual { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 16px; padding: 30px; margin: 20px auto; max-width: 700px; }
-  .esp32-chip { background: #263238; border: 2px solid #546e7a; border-radius: 8px; padding: 20px; position: relative; }
-  .esp32-label { text-align: center; color: #4caf50; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+  .esp8266-visual { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 16px; padding: 30px; margin: 20px auto; max-width: 700px; }
+  .esp8266-chip { background: #263238; border: 2px solid #546e7a; border-radius: 8px; padding: 20px; position: relative; }
+  .esp8266-label { text-align: center; color: #4caf50; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
   .pin-row { display: flex; justify-content: space-between; margin: 5px 0; }
   .pin { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; min-width: 80px; text-align: center; }
   .pin-used { background: #2e7d32; color: white; }
@@ -91,7 +91,7 @@
   
   @media print {
     body { background: white; color: #333; }
-    .arch-box, .sensor-card, .esp32-visual, .flow-step, .table-card, .step-list li { background: #f5f5f5; border-color: #ccc; }
+    .arch-box, .sensor-card, .esp8266-visual, .flow-step, .table-card, .step-list li { background: #f5f5f5; border-color: #ccc; }
   }
 </style>
 </head>
@@ -139,7 +139,7 @@
   <rect x="335" y="90" width="220" height="28" rx="6" fill="#263238"/>
   <text x="445" y="109" text-anchor="middle" fill="#80cbc4" font-size="11">📋 sensor_readings (INSERT)</text>
   <rect x="335" y="125" width="220" height="28" rx="6" fill="#263238"/>
-  <text x="445" y="144" text-anchor="middle" fill="#80cbc4" font-size="11">📋 esp32_status (UPSERT)</text>
+  <text x="445" y="144" text-anchor="middle" fill="#80cbc4" font-size="11">📋 esp8266_status (UPSERT)</text>
   <rect x="335" y="160" width="220" height="28" rx="6" fill="#263238"/>
   <text x="445" y="179" text-anchor="middle" fill="#80cbc4" font-size="11">🔐 Auth + RLS Policies</text>
   <rect x="335" y="195" width="220" height="28" rx="6" fill="#1b3a1b"/>
@@ -254,8 +254,8 @@
 <ol class="step-list">
   <li><b>Acheter le matériel</b> (~21 000 FCFA) — voir liste ci-dessus</li>
   <li><b>Créer le projet Supabase</b> sur supabase.com (gratuit)</li>
-  <li><b>Créer les tables</b> : sensor_readings, esp32_status, profiles (SQL dans le README)</li>
-  <li><b>Activer Realtime</b> sur sensor_readings et esp32_status</li>
+  <li><b>Créer les tables</b> : sensor_readings, esp8266_status, profiles (SQL dans le README)</li>
+  <li><b>Activer Realtime</b> sur sensor_readings et esp8266_status</li>
   <li><b>Configurer les politiques RLS</b> pour sécuriser les données</li>
   <li><b>Récupérer</b> SUPABASE_URL et SUPABASE_ANON_KEY</li>
   <li><b>Brancher les capteurs</b> selon le schéma ci-dessous</li>
@@ -425,9 +425,9 @@
   <line x1="35" y1="133" x2="65" y2="133" stroke="#6a1b9a" stroke-width="3"/><text x="75" y="137" fill="#e0e0e0" font-size="10">Signal / Données</text>
 </svg>
 
-<div class="esp32-visual">
-  <div class="esp32-label">ESP8266 DevKit V1</div>
-  <div class="esp32-chip">
+<div class="esp8266-visual">
+  <div class="esp8266-label">ESP8266 DevKit V1</div>
+  <div class="esp8266-chip">
     <div class="pin-row">
       <span class="pin pin-power">3V3</span>
       <span class="pin pin-free">D0 (GPIO 16)</span>
@@ -634,7 +634,7 @@ Body:
 </div>
 
 <div class="table-card">
-  <div class="table-name">📋 esp32_status</div>
+  <div class="table-name">📋 esp8266_status</div>
   <span class="field field-key">id (BIGSERIAL PK)</span>
   <span class="field field-key">user_id (UUID FK)</span>
   <span class="field field-bool">connected (BOOLEAN)</span>
@@ -706,8 +706,8 @@ Body:
 
 <ol class="step-list">
   <li><b>Créer le projet Supabase</b> sur <span class="code">supabase.com</span></li>
-  <li><b>Créer les tables</b> : <span class="code">sensor_readings</span>, <span class="code">esp32_status</span>, <span class="code">profiles</span> (SQL dans le README)</li>
-  <li><b>Activer Realtime</b> sur <span class="code">sensor_readings</span> et <span class="code">esp32_status</span></li>
+  <li><b>Créer les tables</b> : <span class="code">sensor_readings</span>, <span class="code">esp8266_status</span>, <span class="code">profiles</span> (SQL dans le README)</li>
+  <li><b>Activer Realtime</b> sur <span class="code">sensor_readings</span> et <span class="code">esp8266_status</span></li>
   <li><b>Configurer les politiques RLS</b> pour sécuriser les données</li>
   <li><b>Récupérer</b> <span class="code">SUPABASE_URL</span> et <span class="code">SUPABASE_ANON_KEY</span></li>
   <li><b>Créer un compte utilisateur</b> dans l'application Flutter (inscription)</li>

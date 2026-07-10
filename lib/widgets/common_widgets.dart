@@ -232,6 +232,7 @@ class TrendIndicator extends StatelessWidget {
     }
     return Icon(icon, size: 16, color: color);
   }
+  
 }
 
 /// ESP8266 Controller Status Card
@@ -740,12 +741,12 @@ class BiogasProductionCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
                 children: [
                   _prodStat(isFrench ? 'Énergie' : 'Energy', '${energy.toStringAsFixed(1)} kWh'),
-                  const SizedBox(width: 16),
                   _prodStat(isFrench ? 'CO2 réduit' : 'CO2 reduced', '${co2.toStringAsFixed(2)} kg'),
-                  const SizedBox(width: 16),
                   _prodStat(isFrench ? 'Efficacité' : 'Efficiency', '${efficiency.toStringAsFixed(1)}%'),
                 ],
               ),
@@ -813,18 +814,20 @@ class EnergyImpactCard extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   _impactItem(context, Icons.bolt, isFrench ? 'Énergie générée' : 'Energy generated', '${energy.toStringAsFixed(1)} kWh', AppTheme.primary),
-                  const SizedBox(width: 12),
                   _impactItem(context, Icons.eco, isFrench ? 'Réduction CO2' : 'CO2 reduction', '${co2.toStringAsFixed(2)} kg', const Color(0xFF2E7D32)),
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   _impactItem(context, Icons.percent, isFrench ? 'Efficacité' : 'Efficiency', '${efficiency.toStringAsFixed(1)}%', AppTheme.tertiary),
-                  const SizedBox(width: 12),
                   _impactItem(context, Icons.storage, isFrench ? 'Mesures' : 'Readings', '$readingCount', AppTheme.secondary),
                 ],
               ),

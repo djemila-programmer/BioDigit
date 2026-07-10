@@ -129,7 +129,7 @@
  *    - Port : COMx (choisir le bon port)
  *    - Upload Speed : 115200
  * 
- * 5. Modifier les valeurs dans biodigit_esp32.ino :
+ * 5. Modifier les valeurs dans biodigit_esp8266.ino :
  *    - WIFI_SSID et WIFI_PASSWORD
  *    - SUPABASE_URL et SUPABASE_ANON_KEY
  *    - USER_ID (UUID de l'utilisateur dans Supabase)
