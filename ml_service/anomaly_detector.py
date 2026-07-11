@@ -291,14 +291,22 @@ def detect_trend_anomalies(readings: list[dict]) -> list[dict]:
 def insert_anomalies(supabase: Client, anomalies: list[dict]) -> None:
     """Insert detected anomalies into anomaly_history and alerts tables."""
     for anomaly in anomalies:
-        # Insert into anomaly_history
+        # Map to actual anomaly_history schema
+        severity_map = {"critical": "Critique", "high": "Elevé", "medium": "Moyen", "low": "Faible"}
+        severity_level = severity_map.get(anomaly["severity"], "Moyen")
+        confidence_pct = round(anomaly["confidence"] * 100, 1)
+        risk = int(round(anomaly["confidence"] * 100, 0))
+        health = int(round(100 - anomaly["confidence"] * 100, 0))
+
         supabase.table("anomaly_history").insert({
             "user_id": anomaly["user_id"],
-            "anomaly_type": anomaly["anomaly_type"],
-            "severity": anomaly["severity"],
-            "description": anomaly["description"],
-            "confidence": anomaly["confidence"],
-            "sensor_data": anomaly["sensor_data"],
+            "severity_level": severity_level,
+            "sensor_anomalies": 1,
+            "prediction_confidence": confidence_pct,
+            "health_score": max(health, 0),
+            "risk_score": min(risk, 100),
+            "sensor_results": anomaly["sensor_data"],
+            "actions": anomaly["description"],
         }).execute()
 
         # Insert corresponding alert
@@ -306,9 +314,11 @@ def insert_anomalies(supabase: Client, anomalies: list[dict]) -> None:
         supabase.table("alerts").insert({
             "user_id": anomaly["user_id"],
             "title": title,
-            "description": anomaly["description"],
+            "type": title,
+            "message": anomaly["description"],
             "severity": anomaly["severity"],
-            "sensor_id": anomaly["anomaly_type"].replace("zscore_", "").replace("trend_", ""),
+            "resolved": False,
+            "acknowledged": False,
         }).execute()
 
     if anomalies:
