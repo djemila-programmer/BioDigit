@@ -468,6 +468,7 @@ class _MainDashboardState extends State<MainDashboard> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isFrench = context.watch<LocaleProvider>().isFrench;
         final columns = constraints.maxWidth < 420 ? 1 : 2;
         return GridView.builder(
           shrinkWrap: true,
@@ -487,10 +488,10 @@ class _MainDashboardState extends State<MainDashboard> {
               unit: m['unit'] as String,
               icon: m['icon'] as IconData,
               iconColor: m['color'] as Color,
-              status: 'LIVE',
+              status: isFrench ? 'DIRECT' : 'LIVE',
               progress: m['progress'] as double,
               trend: m['trend'] as String,
-              lastUpdate: 'Now',
+              lastUpdate: isFrench ? 'Maintenant' : 'Now',
               sensorModel: m['sensor'] as String,
             );
           },

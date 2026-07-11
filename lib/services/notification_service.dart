@@ -6,6 +6,7 @@ import 'sensor_service.dart';
 class NotificationService {
   FlutterLocalNotificationsPlugin? _localNotifications;
   bool _initialized = false;
+  int _nextNotificationId = 100;
 
   FlutterLocalNotificationsPlugin? get _localNotif {
     _localNotifications ??= FlutterLocalNotificationsPlugin();
@@ -85,31 +86,30 @@ class NotificationService {
 
   Future<void> checkAndNotify(SensorReading reading) async {
     if (!_initialized || _localNotif == null) return;
-    int notificationId = 100;
     if (reading.temperature > 40 || reading.temperature < 25) {
       await _showLocalNotification(
-        id: notificationId++,
+        id: _nextNotificationId++,
         title: 'Température Critique',
         body: 'Température à ${reading.temperature.toStringAsFixed(1)}°C — action requise.',
       );
     }
     if (reading.pressure > 1.5 || reading.pressure < 0.8) {
       await _showLocalNotification(
-        id: notificationId++,
+        id: _nextNotificationId++,
         title: 'Pression Critique',
         body: 'Pression à ${reading.pressure.toStringAsFixed(2)} bar — vérifiez la soupape.',
       );
     }
     if (reading.methane > 500) {
       await _showLocalNotification(
-        id: notificationId++,
+        id: _nextNotificationId++,
         title: 'Méthane Critique',
         body: 'Méthane à ${reading.methane.toStringAsFixed(0)} ppm — risque de fuite.',
       );
     }
     if (reading.slurryLevel > 90 || reading.slurryLevel < 20) {
       await _showLocalNotification(
-        id: notificationId++,
+        id: _nextNotificationId++,
         title: 'Niveau de Lisier Critique',
         body: 'Niveau à ${reading.slurryLevel.toStringAsFixed(1)}% — vidange nécessaire.',
       );

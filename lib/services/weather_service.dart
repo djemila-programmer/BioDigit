@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/app_env.dart';
 
 class WeatherService {
-  // API key gratuite OpenWeatherMap
-  // Inscrivez-vous sur https://openweathermap.org/api pour obtenir une clé
-  static const String _apiKey = 'bd5e378503939ddaee76f12ad7a97608'; // Clé de démo
+  static String get _apiKey => AppEnv.openWeatherApiKey;
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
 
   // Coordonnées de Ouagadougou

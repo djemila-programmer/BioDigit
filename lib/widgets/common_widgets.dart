@@ -9,38 +9,40 @@ class StatusBadge extends StatelessWidget {
 
   const StatusBadge({super.key, required this.label, required this.type});
 
-  Color get _bgColor {
+  Color _bgColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (type) {
       case 'normal':
       case 'active':
-        return const Color(0xFFE8F5E9);
+        return isDark ? const Color(0xFF1B3A1E) : const Color(0xFFE8F5E9);
       case 'warning':
       case 'stable':
-        return const Color(0xFFFFF8E1);
+        return isDark ? const Color(0xFF3E3218) : const Color(0xFFFFF8E1);
       case 'critical':
-        return const Color(0xFFFFDAD6);
+        return isDark ? const Color(0xFF3D1515) : const Color(0xFFFFDAD6);
       case 'info':
-        return AppTheme.surfaceContainerHighest;
+        return Theme.of(context).colorScheme.surfaceContainerHighest;
       default:
-        return const Color(0xFFE8F5E9);
+        return isDark ? const Color(0xFF1B3A1E) : const Color(0xFFE8F5E9);
     }
   }
 
-  Color get _textColor {
+  Color _textColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (type) {
       case 'normal':
       case 'active':
-        return const Color(0xFF1B5E20);
+        return isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
       case 'warning':
-        return const Color(0xFFF57F17);
+        return isDark ? const Color(0xFFFFD54F) : const Color(0xFFF57F17);
       case 'stable':
-        return AppTheme.secondary;
+        return isDark ? const Color(0xFFEBBCAC) : AppTheme.secondary;
       case 'critical':
-        return AppTheme.error;
+        return isDark ? const Color(0xFFEF9A9A) : AppTheme.error;
       case 'info':
         return AppTheme.outline;
       default:
-        return const Color(0xFF1B5E20);
+        return isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
     }
   }
 
@@ -49,7 +51,7 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _bgColor,
+        color: _bgColor(context),
         borderRadius: BorderRadius.circular(9999),
       ),
       child: Text(
@@ -57,7 +59,7 @@ class StatusBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
-          color: _textColor,
+          color: _textColor(context),
           letterSpacing: 0.5,
         ),
       ),
@@ -119,6 +121,7 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -143,25 +146,32 @@ class MetricCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.1,
+              Expanded(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    letterSpacing: 0.1,
+                  ),
                 ),
               ),
               if (sensorModel != null && sensorModel!.isNotEmpty) ...[                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     sensorModel!,
-                    style: const TextStyle(fontSize: 9, color: AppTheme.outline, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Theme.of(context).colorScheme.outline,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -172,13 +182,16 @@ class MetricCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 28,
-                  height: 36 / 28,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
+              Flexible(
+                child: Text(
+                  value,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 28,
+                    height: 36 / 28,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(width: 2),
@@ -198,7 +211,7 @@ class MetricCard extends StatelessWidget {
           ProgressIndicatorBar(progress: progress, color: iconColor),
           if (lastUpdate != null) ...[            const SizedBox(height: 4),
             Text(
-              'Updated $lastUpdate',
+              isFrench ? 'Mis à jour $lastUpdate' : 'Updated $lastUpdate',
               style: TextStyle(fontSize: 10, color: AppTheme.subtext(context)),
             ),
           ],
@@ -215,16 +228,17 @@ class TrendIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     IconData icon;
     Color color;
     switch (trend) {
       case 'rising':
         icon = Icons.trending_up;
-        color = const Color(0xFF1B5E20);
+        color = isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
         break;
       case 'falling':
         icon = Icons.trending_down;
-        color = AppTheme.error;
+        color = isDark ? const Color(0xFFEF9A9A) : AppTheme.error;
         break;
       default:
         icon = Icons.trending_flat;

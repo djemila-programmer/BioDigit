@@ -209,14 +209,24 @@ class AuthService {
   }
 
   /// Change password for the current user.
+  /// Verifies the current password before applying the change.
   Future<void> changePassword(
     String currentPassword,
     String newPassword,
   ) async {
     final user = supabase.auth.currentUser;
     if (user == null) throw AuthException('Non connecté.');
+    if (user.email == null) throw AuthException('Email introuvable.');
     try {
-      // Supabase doesn't require re-authentication for password change
+      // Verify current password by re-authenticating
+      final verification = await supabase.auth.signInWithPassword(
+        email: user.email!,
+        password: currentPassword,
+      );
+      if (verification.user == null) {
+        throw AuthException('Mot de passe actuel incorrect.');
+      }
+      // Now update to the new password
       await supabase.auth.updateUser(UserAttributes(password: newPassword));
     } on AuthException catch (e) {
       throw AuthException(_mapAuthError(e.message));

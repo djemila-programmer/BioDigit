@@ -7,6 +7,7 @@ import '../services/providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'settings_screen.dart';
 
 class UserProfile extends StatelessWidget {
   const UserProfile({super.key, this.showBackButton = true});
@@ -298,6 +299,13 @@ class UserProfile extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('$label bientôt disponible.')),
             );
+            return;
+          }
+          // Settings is pushed directly with back button when accessed from profile
+          if (route == AppRoutes.settings) {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (_) => const SettingsScreen(showBackButton: true),
+            ));
             return;
           }
           Navigator.pushNamed(context, route);

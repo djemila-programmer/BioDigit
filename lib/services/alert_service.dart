@@ -33,17 +33,17 @@ class AlertService {
 
   Future<String> createAlert({
     required String title,
-    required String description,
+    required String message,
     required String severity,
-    required String sensorId,
-    required String location,
+    required String type,
   }) async {
+    final uid = supabase.auth.currentUser?.id;
     final response = await supabase.from('alerts').insert({
+      'user_id': uid,
       'title': title,
-      'description': description,
+      'message': message,
+      'type': type,
       'severity': severity,
-      'sensor_id': sensorId,
-      'location': location,
       'acknowledged': false,
       'resolved': false,
     }).select('id').single();
@@ -53,14 +53,12 @@ class AlertService {
   Future<void> acknowledgeAlert(String alertId) async {
     await supabase.from('alerts').update({
       'acknowledged': true,
-      'acknowledged_at': DateTime.now().toIso8601String(),
     }).eq('id', alertId);
   }
 
   Future<void> resolveAlert(String alertId) async {
     await supabase.from('alerts').update({
       'resolved': true,
-      'resolved_at': DateTime.now().toIso8601String(),
     }).eq('id', alertId);
   }
 
@@ -91,46 +89,54 @@ class AlertService {
     if (temperature > 40) {
       await createAlert(
         title: 'Température critique: ${temperature.toStringAsFixed(1)}°C',
-        description: 'La température a dépassé le seuil maximum de 40°C.',
-        severity: 'critical', sensorId: 'DHT22', location: 'Chambre principale');
+        message: 'La température a dépassé le seuil maximum de 40°C.',
+        type: 'Température critique',
+        severity: 'critical');
     } else if (temperature < 25) {
       await createAlert(
         title: 'Température basse: ${temperature.toStringAsFixed(1)}°C',
-        description: 'La température est en dessous du seuil minimum de 25°C.',
-        severity: 'warning', sensorId: 'DHT22', location: 'Chambre principale');
+        message: 'La température est en dessous du seuil minimum de 25°C.',
+        type: 'Température basse',
+        severity: 'warning');
     }
     if (pressure > 1.5) {
       await createAlert(
         title: 'Pression critique: ${pressure.toStringAsFixed(2)} bar',
-        description: 'La pression a dépassé 1.5 bar. Soupape de sécurité activée.',
-        severity: 'critical', sensorId: 'BMP280', location: 'Biodigesteur principal');
+        message: 'La pression a dépassé 1.5 bar. Soupape de sécurité activée.',
+        type: 'Pression critique',
+        severity: 'critical');
     } else if (pressure < 0.8) {
       await createAlert(
         title: 'Pression basse: ${pressure.toStringAsFixed(2)} bar',
-        description: 'La pression est en dessous de 0.8 bar.',
-        severity: 'warning', sensorId: 'BMP280', location: 'Biodigesteur principal');
+        message: 'La pression est en dessous de 0.8 bar.',
+        type: 'Pression basse',
+        severity: 'warning');
     }
     if (methane > 500) {
       await createAlert(
         title: 'Méthane élevé: ${methane.toStringAsFixed(0)} ppm',
-        description: 'Concentration de méthane au-dessus de 500 ppm. Risque de fuite.',
-        severity: 'critical', sensorId: 'MQ-4', location: 'Dôme de gaz');
+        message: 'Concentration de méthane au-dessus de 500 ppm. Risque de fuite.',
+        type: 'Méthane élevé',
+        severity: 'critical');
     } else if (methane > 150) {
       await createAlert(
         title: 'Méthane en production: ${methane.toStringAsFixed(0)} ppm',
-        description: 'Production de méthane détectée.',
-        severity: 'info', sensorId: 'MQ-4', location: 'Dôme de gaz');
+        message: 'Production de méthane détectée.',
+        type: 'Méthane en production',
+        severity: 'info');
     }
     if (slurryLevel > 90) {
       await createAlert(
         title: 'Niveau de lisier critique: ${slurryLevel.toStringAsFixed(1)}%',
-        description: 'Le niveau de lisier dépasse 90%. Vidange nécessaire.',
-        severity: 'critical', sensorId: 'HC-SR04', location: 'Sortie de lisier');
+        message: 'Le niveau de lisier dépasse 90%. Vidange nécessaire.',
+        type: 'Lisier critique',
+        severity: 'critical');
     } else if (slurryLevel < 20) {
       await createAlert(
         title: 'Niveau de lisier bas: ${slurryLevel.toStringAsFixed(1)}%',
-        description: 'Le niveau de lisier est en dessous de 20%.',
-        severity: 'warning', sensorId: 'HC-SR04', location: 'Sortie de lisier');
+        message: 'Le niveau de lisier est en dessous de 20%.',
+        type: 'Lisier bas',
+        severity: 'warning');
     }
   }
 }
@@ -139,10 +145,9 @@ class AlertService {
 class SmartAlert {
   final String id;
   final String title;
-  final String description;
+  final String message;
+  final String type;
   final String severity;
-  final String sensorId;
-  final String location;
   final DateTime? timestamp;
   final bool acknowledged;
   final bool resolved;
@@ -150,10 +155,9 @@ class SmartAlert {
   const SmartAlert({
     required this.id,
     required this.title,
-    required this.description,
+    required this.message,
+    required this.type,
     required this.severity,
-    required this.sensorId,
-    required this.location,
     this.timestamp,
     this.acknowledged = false,
     this.resolved = false,
@@ -163,10 +167,9 @@ class SmartAlert {
     return SmartAlert(
       id: data['id']?.toString() ?? '',
       title: data['title']?.toString() ?? '',
-      description: data['description']?.toString() ?? '',
+      message: data['message']?.toString() ?? '',
+      type: data['type']?.toString() ?? '',
       severity: data['severity']?.toString() ?? 'info',
-      sensorId: data['sensor_id']?.toString() ?? '',
-      location: data['location']?.toString() ?? '',
       timestamp: data['created_at'] != null
           ? DateTime.tryParse(data['created_at'].toString())
           : null,

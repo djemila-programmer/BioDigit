@@ -86,8 +86,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(9999),
                     ),
-                    child: const Text(
-                      'IMMEDIATE ACTION REQUIRED',
+                    child: Text(
+                      isFrench ? 'ACTION IMMÉDIATE REQUISE' : 'IMMEDIATE ACTION REQUIRED',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -98,7 +98,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${counts['critical'] ?? 0} Critical Issues',
+                    isFrench ? '${counts['critical'] ?? 0} Problèmes critiques' : '${counts['critical'] ?? 0} Critical Issues',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -107,22 +107,25 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${allActive.length} active alerts detected in the last 24 hours',
+                    isFrench
+                        ? '${allActive.length} alertes actives détectées dernières 24h'
+                        : '${allActive.length} active alerts detected in the last 24 hours',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       _statPill(
-                        '${counts['warning'] ?? 0} Warnings',
+                        isFrench ? '${counts['warning'] ?? 0} Avertissements' : '${counts['warning'] ?? 0} Warnings',
                         Icons.warning_amber,
                       ),
-                      const SizedBox(width: 8),
                       _statPill(
-                        '${counts['info'] ?? 0} Info',
+                        isFrench ? '${counts['info'] ?? 0} Info' : '${counts['info'] ?? 0} Info',
                         Icons.info_outline,
                       ),
                     ],
@@ -138,17 +141,17 @@ class _AlertsScreenState extends State<AlertsScreen> {
               runSpacing: 8,
               children: [
                 _filterChip(
-                  'All (${allActive.length})',
+                  isFrench ? 'Tous (${allActive.length})' : 'All (${allActive.length})',
                   _filter == 'all',
                   () => setState(() => _filter = 'all'),
                 ),
                 _filterChip(
-                  'Critical (${counts['critical'] ?? 0})',
+                  isFrench ? 'Critique (${counts['critical'] ?? 0})' : 'Critical (${counts['critical'] ?? 0})',
                   _filter == 'critical',
                   () => setState(() => _filter = 'critical'),
                 ),
                 _filterChip(
-                  'Warning (${counts['warning'] ?? 0})',
+                  isFrench ? 'Avertissement (${counts['warning'] ?? 0})' : 'Warning (${counts['warning'] ?? 0})',
                   _filter == 'warning',
                   () => setState(() => _filter = 'warning'),
                 ),
@@ -162,7 +165,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
             const SizedBox(height: 20),
             Text(
-              'Active Alerts',
+              isFrench ? 'Alertes actives' : 'Active Alerts',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -182,7 +185,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  'No active alerts for this filter.',
+                  isFrench ? 'Aucune alerte active pour ce filtre.' : 'No active alerts for this filter.',
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
               )
@@ -193,7 +196,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
             // Location map placeholder
             Text(
-              'Alert Locations',
+              isFrench ? 'Localisation des alertes' : 'Alert Locations',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -224,7 +227,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Farm Map View',
+                          isFrench ? 'Vue carte de la ferme' : 'Farm Map View',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppTheme.outline,
@@ -236,17 +239,17 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   Positioned(
                     left: 60,
                     top: 40,
-                    child: _mapMarker(AppTheme.error, 'North Sector'),
+                    child: _mapMarker(AppTheme.error, isFrench ? 'Secteur Nord' : 'North Sector'),
                   ),
                   Positioned(
                     right: 80,
                     top: 80,
-                    child: _mapMarker(AppTheme.secondary, 'East Sector'),
+                    child: _mapMarker(AppTheme.secondary, isFrench ? 'Secteur Est' : 'East Sector'),
                   ),
                   Positioned(
                     left: 120,
                     bottom: 40,
-                    child: _mapMarker(AppTheme.outline, 'Main Grid'),
+                    child: _mapMarker(AppTheme.outline, isFrench ? 'Réseau principal' : 'Main Grid'),
                   ),
                 ],
               ),
@@ -356,6 +359,7 @@ class _AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isFrench = context.watch<LocaleProvider>().isFrench;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -399,7 +403,7 @@ class _AlertCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${alert.timeAgo} · ${alert.sensorId}',
+                      '${alert.timeAgo} · ${alert.type}',
                       style: TextStyle(
                         fontSize: 12,
                         color: cs.onSurfaceVariant,
@@ -428,7 +432,7 @@ class _AlertCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            alert.description,
+            alert.message,
             style: TextStyle(
               fontSize: 13,
               color: cs.onSurfaceVariant,
@@ -439,13 +443,13 @@ class _AlertCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.location_on_outlined,
+                Icons.category_outlined,
                 size: 14,
                 color: cs.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Text(
-                alert.location,
+                alert.type,
                 style: TextStyle(
                   fontSize: 12,
                   color: cs.onSurfaceVariant,
@@ -468,7 +472,9 @@ class _AlertCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Text('Investigate'),
+                child: Text(
+                  isFrench ? 'Investiguer' : 'Investigate',
+                ),
               ),
             ],
           ),

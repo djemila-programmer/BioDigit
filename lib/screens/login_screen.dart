@@ -39,9 +39,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!success || !mounted) return;
     final role = auth.user?.role ?? 'user';
-    Navigator.pushReplacementNamed(
+    Navigator.pushNamedAndRemoveUntil(
       context,
       role == 'admin' ? AppRoutes.adminDashboard : AppRoutes.mainDashboard,
+      (route) => false,
     );
   }
 

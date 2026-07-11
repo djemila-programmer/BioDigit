@@ -60,7 +60,11 @@ class BottomNavBar extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (currentIndex != index) {
-          Navigator.pushNamed(context, item.route);
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            item.route,
+            (route) => false,
+          );
         }
       },
       borderRadius: BorderRadius.circular(9999),

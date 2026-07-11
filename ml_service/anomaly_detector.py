@@ -100,25 +100,33 @@ def detect_zscore_anomalies(readings: list[dict]) -> list[dict]:
 
     anomalies = []
     scaler = StandardScaler()
-
+    
     for field in SENSOR_FIELDS:
-        values = np.array([r[field] for r in readings if r[field] is not None]).reshape(-1, 1)
+        # Keep track of original indices to avoid mismatch
+        valid_indices = []
+        valid_values = []
+        for idx, r in enumerate(readings):
+            if r[field] is not None:
+                valid_indices.append(idx)
+                valid_values.append(r[field])
+    
+        values = np.array(valid_values).reshape(-1, 1)
         if len(values) < MIN_SAMPLES_FOR_ML:
             continue
-
+    
         scaler.fit(values)
         z_scores = scaler.transform(values).flatten()
-
+    
         for i, z in enumerate(z_scores):
             if abs(z) > ZSCORE_THRESHOLD:
-                reading = readings[i]
+                reading = readings[valid_indices[i]]
                 anomalies.append({
                     "anomaly_type": f"zscore_{field}",
                     "severity": _severity_from_z(abs(z)),
                     "confidence": round(min(abs(z) / 4.0, 1.0), 3),
                     "description": (
                         f"Z-score anomaly on {field}: value={reading[field]}, "
-                        f"z={z:.2f} (threshold=±{ZSCORE_THRESHOLD})"
+                        f"z={z:.2f} (threshold=\u00b1{ZSCORE_THRESHOLD})"
                     ),
                     "sensor_data": {
                         field: reading[field],

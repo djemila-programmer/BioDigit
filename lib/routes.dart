@@ -76,8 +76,8 @@ class AppRoutes {
     anomalyDetection: (context) => const AuthGuard(child: AnomalyDetection()),
     notifications: (context) => const AuthGuard(child: NotificationsCenter()),
     farmManagement: (context) => const AuthGuard(child: FarmManagement()),
-    userProfile: (context) => const AuthGuard(child: UserProfile()),
-    settings: (context) => const AuthGuard(child: SettingsScreen()),
+    userProfile: (context) => const AuthGuard(child: UserProfile(showBackButton: false)),
+    settings: (context) => const AuthGuard(child: SettingsScreen(showBackButton: false)),
 
     adminDashboard: (context) =>
         const AuthGuard(role: 'admin', child: AdminDashboard()),

@@ -6,6 +6,7 @@ class AppEnv {
   static String get supabaseRedirectUrl => _optional('SUPABASE_REDIRECT_URL') ?? 'biodigitapp://reset-password';
   static String get appName => _optional('APP_NAME') ?? 'BioDigit';
   static String get appUrl => _optional('APP_URL') ?? '';
+  static String get openWeatherApiKey => _optional('OPENWEATHER_API_KEY') ?? '';
 
   static String _required(String key, {String? fallback}) {
     final value = dotenv.env[key]?.trim().isNotEmpty == true ? dotenv.env[key]!.trim() : null;

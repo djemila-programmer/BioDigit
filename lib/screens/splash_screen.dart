@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../routes.dart';
+import '../services/providers.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,6 +39,19 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _progressController.forward().then((_) {
       if (mounted) setState(() => _showButton = true);
+    });
+
+    // Check if user is already authenticated and redirect to dashboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isAuthenticated) {
+        final role = auth.user?.role ?? 'user';
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          role == 'admin' ? AppRoutes.adminDashboard : AppRoutes.mainDashboard,
+          (route) => false,
+        );
+      }
     });
   }
 

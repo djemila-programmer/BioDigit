@@ -33,7 +33,7 @@ class SensorService {
   /// ESP8266 controller status stream from Supabase Realtime.
   Stream<Esp32StatusData> esp32StatusStream() {
     return supabase
-        .from('esp32_status')
+        .from('esp8266_status')
         .stream(primaryKey: ['id'])
         .map((rows) {
           if (rows.isEmpty) return Esp32StatusData.disconnected();
@@ -61,7 +61,7 @@ class SensorService {
   Future<Esp32StatusData> getEsp32Status() async {
     try {
       final response = await supabase
-          .from('esp32_status')
+          .from('esp8266_status')
           .select()
           .order('created_at', ascending: false)
           .limit(1)
