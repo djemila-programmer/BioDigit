@@ -40,7 +40,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           bottomNavigationBar: widget.showBackButton ? null : const BottomNavBar(currentIndex: 4),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppTheme.containerPadding),
+            padding: EdgeInsets.fromLTRB(
+              AppTheme.containerPadding,
+              AppTheme.containerPadding,
+              AppTheme.containerPadding,
+              widget.showBackButton ? AppTheme.containerPadding : 120,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -38,6 +38,7 @@ class UserProfile extends StatelessWidget {
           ),
           bottomNavigationBar: showBackButton ? null : const BottomNavBar(currentIndex: 4),
           body: SingleChildScrollView(
+            padding: EdgeInsets.only(bottom: showBackButton ? 0 : 120),
             child: Column(
               children: [
                 Container(
