@@ -17,7 +17,7 @@ class MainDashboard extends StatefulWidget {
 }
 
 class _MainDashboardState extends State<MainDashboard> {
-  WeatherData? _weather;
+  WeatherResult? _weatherResult;
 
   @override
   void initState() {
@@ -31,9 +31,9 @@ class _MainDashboardState extends State<MainDashboard> {
   }
 
   Future<void> _loadWeather() async {
-    final weather = await WeatherService.getOuagaWeather();
+    final result = await WeatherService.getWeather();
     if (mounted) {
-      setState(() => _weather = weather);
+      setState(() => _weatherResult = result);
     }
   }
 
@@ -163,6 +163,7 @@ class _MainDashboardState extends State<MainDashboard> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PreferredSize(
       preferredSize: const Size.fromHeight(64),
       child: Container(
@@ -181,12 +182,12 @@ class _MainDashboardState extends State<MainDashboard> {
                   child: Icon(Icons.eco, color: AppTheme.onPrimary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   'BioDigit',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.primary,
+                    color: isDark ? AppTheme.primaryFixed : AppTheme.primary,
                   ),
                 ),
                 const Spacer(),
@@ -224,8 +225,8 @@ class _MainDashboardState extends State<MainDashboard> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                _weather?.weatherIcon ?? Icons.wb_sunny,
-                color: _weather?.weatherColor ?? AppTheme.secondary,
+                _weatherResult?.data?.weatherIcon ?? Icons.wb_sunny,
+                color: _weatherResult?.data?.weatherColor ?? AppTheme.secondary,
                 size: 28,
               ),
               const SizedBox(width: 12),
@@ -233,7 +234,7 @@ class _MainDashboardState extends State<MainDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Ouagadougou, BF',
+                    _weatherResult?.city ?? 'Ouagadougou, BF',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -241,11 +242,11 @@ class _MainDashboardState extends State<MainDashboard> {
                     ),
                   ),
                   Text(
-                    _weather != null ? '${_weather!.temperature.round()}°C' : '--°C',
+                    _weatherResult?.data != null ? '${_weatherResult!.data!.temperature.round()}°C' : '--°C',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w500,
-                      color: _weather?.weatherColor ?? AppTheme.primary,
+                      color: _weatherResult?.data?.weatherColor ?? AppTheme.primary,
                     ),
                   ),
                 ],

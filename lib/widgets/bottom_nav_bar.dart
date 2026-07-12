@@ -25,6 +25,7 @@ class BottomNavBar extends StatelessWidget {
     final surfaceColor = isDark ? AppTheme.surfaceColor(context) : AppTheme.surface;
     final borderColor = isDark ? AppTheme.borderStrong(context) : AppTheme.outlineVariant.withValues(alpha: 0.2);
     final unselectedColor = isDark ? AppTheme.subtext(context) : AppTheme.onSurfaceVariant;
+    final selectedColor = isDark ? AppTheme.primaryFixed : AppTheme.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -48,7 +49,7 @@ class BottomNavBar extends StatelessWidget {
             children: List.generate(items.length, (index) {
               final item = items[index];
               final isSelected = currentIndex == index;
-              return _buildNavItem(context, item, isSelected, index, unselectedColor);
+              return _buildNavItem(context, item, isSelected, index, unselectedColor, selectedColor);
             }),
           ),
         ),
@@ -56,7 +57,7 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, _NavItem item, bool isSelected, int index, Color unselectedColor) {
+  Widget _buildNavItem(BuildContext context, _NavItem item, bool isSelected, int index, Color unselectedColor, Color selectedColor) {
     return InkWell(
       onTap: () {
         if (currentIndex != index) {
@@ -84,7 +85,7 @@ class BottomNavBar extends StatelessWidget {
           children: [
             Icon(
               isSelected ? item.filledIcon : item.icon,
-              color: isSelected ? AppTheme.primary : unselectedColor,
+              color: isSelected ? selectedColor : unselectedColor,
               size: 23,
             ),
             const SizedBox(height: 2),
@@ -95,7 +96,7 @@ class BottomNavBar extends StatelessWidget {
                 height: 16 / 11,
                 letterSpacing: 0.5,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppTheme.primary : unselectedColor,
+                color: isSelected ? selectedColor : unselectedColor,
               ),
             ),
           ],

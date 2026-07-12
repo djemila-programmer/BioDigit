@@ -181,7 +181,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: narrow ? 2.1 : 1.0,
+                  childAspectRatio: narrow ? 3.5 : 1.3,
                   children: [
                     _BentoCard(
                       title: isFrench ? 'Température moyenne' : 'Avg Temperature',
@@ -426,7 +426,7 @@ class _BentoCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Expanded(child: child),
+          SizedBox(height: 40, child: child),
         ],
       ),
     );

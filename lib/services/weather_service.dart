@@ -1,23 +1,69 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 import '../core/app_env.dart';
 
 class WeatherService {
   static String get _apiKey => AppEnv.openWeatherApiKey;
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
 
-  // Coordonnées de Ouagadougou
-  static const double _lat = 12.3714;
-  static const double _lon = -1.5197;
+  // Fallback: Ouagadougou
+  static const double _fallbackLat = 12.3714;
+  static const double _fallbackLon = -1.5197;
+  static const String _fallbackCity = 'Ouagadougou, BF';
 
-  static Future<WeatherData?> getOuagaWeather() async {
+  /// Get weather using device geolocation, fallback to Ouagadougou.
+  static Future<WeatherResult> getWeather() async {
+    if (_apiKey.isEmpty) {
+      return WeatherResult(city: _fallbackCity, data: null);
+    }
+
+    double lat = _fallbackLat;
+    double lon = _fallbackLon;
+    String city = _fallbackCity;
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return WeatherResult(city: city, data: await _fetchWeather(lat, lon));
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return WeatherResult(city: city, data: await _fetchWeather(lat, lon));
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        return WeatherResult(city: city, data: await _fetchWeather(lat, lon));
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      lat = position.latitude;
+      lon = position.longitude;
+      city = '${position.latitude.toStringAsFixed(2)}, ${position.longitude.toStringAsFixed(2)}';
+    } catch (_) {
+      // Use fallback coordinates
+    }
+
+    final data = await _fetchWeather(lat, lon);
+    return WeatherResult(city: city, data: data);
+  }
+
+  static Future<WeatherData?> _fetchWeather(double lat, double lon) async {
     try {
       final uri = Uri.parse(
-        '$_baseUrl?lat=$_lat&lon=$_lon&appid=$_apiKey&units=metric&lang=fr',
+        '$_baseUrl?lat=$lat&lon=$lon&appid=$_apiKey&units=metric&lang=fr',
       );
       final response = await http.get(uri).timeout(const Duration(seconds: 10));
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return WeatherData.fromJson(data);
@@ -25,6 +71,18 @@ class WeatherService {
     } catch (_) {}
     return null;
   }
+
+  /// Legacy method kept for compatibility.
+  static Future<WeatherData?> getOuagaWeather() async {
+    final result = await getWeather();
+    return result.data;
+  }
+}
+
+class WeatherResult {
+  final String city;
+  final WeatherData? data;
+  const WeatherResult({required this.city, required this.data});
 }
 
 class WeatherData {

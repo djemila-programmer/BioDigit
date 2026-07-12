@@ -51,11 +51,11 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               const SizedBox(width: 12),
               Text(
                 title ?? 'BioDigit',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   height: 26 / 20,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primary,
+                  color: isDark ? AppTheme.primaryFixed : AppTheme.primary,
                 ),
               ),
               const Spacer(),
