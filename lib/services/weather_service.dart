@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import '../core/app_env.dart';
 
 class WeatherService {
-  static String get _apiKey => AppEnv.openWeatherApiKey;
-  static const String _baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
+  // Open-Meteo API - gratuit, sans clé API
+  static const String _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
   // Fallback: Ouagadougou
   static const double _fallbackLat = 12.3714;
@@ -15,10 +14,6 @@ class WeatherService {
 
   /// Get weather using device geolocation, fallback to Ouagadougou.
   static Future<WeatherResult> getWeather() async {
-    if (_apiKey.isEmpty) {
-      return WeatherResult(city: _fallbackCity, data: null);
-    }
-
     double lat = _fallbackLat;
     double lon = _fallbackLon;
     String city = _fallbackCity;
@@ -61,7 +56,7 @@ class WeatherService {
   static Future<WeatherData?> _fetchWeather(double lat, double lon) async {
     try {
       final uri = Uri.parse(
-        '$_baseUrl?lat=$lat&lon=$lon&appid=$_apiKey&units=metric&lang=fr',
+        '$_baseUrl?latitude=$lat&longitude=$lon&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto',
       );
       final response = await http.get(uri).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
@@ -69,20 +64,7 @@ class WeatherService {
         return WeatherData.fromJson(data);
       }
     } catch (_) {}
-    // Fallback: typical Ouagadougou temperature
-    return WeatherData(
-      temperature: 32,
-      description: 'Ensoleillé',
-      iconCode: '01d',
-      humidity: 45,
-      windSpeed: 3.5,
-    );
-  }
-
-  /// Legacy method kept for compatibility.
-  static Future<WeatherData?> getOuagaWeather() async {
-    final result = await getWeather();
-    return result.data;
+    return null;
   }
 }
 
@@ -108,17 +90,41 @@ class WeatherData {
   });
 
   factory WeatherData.fromJson(Map<String, dynamic> json) {
-    final main = json['main'] as Map<String, dynamic>;
-    final weather = (json['weather'] as List).first as Map<String, dynamic>;
-    final wind = json['wind'] as Map<String, dynamic>;
+    final current = json['current'] as Map<String, dynamic>;
+    final weatherCode = current['weather_code'] ?? 0;
 
     return WeatherData(
-      temperature: (main['temp'] as num).toDouble(),
-      description: weather['description'] ?? '',
-      iconCode: weather['icon'] ?? '01d',
-      humidity: main['humidity'] ?? 0,
-      windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
+      temperature: (current['temperature_2m'] as num).toDouble(),
+      description: _getDescription(weatherCode),
+      iconCode: _getIconCode(weatherCode),
+      humidity: current['relative_humidity_2m'] ?? 0,
+      windSpeed: (current['wind_speed_10m'] as num?)?.toDouble() ?? 0,
     );
+  }
+
+  static String _getDescription(int code) {
+    if (code == 0) return 'Ciel dégagé';
+    if (code <= 3) return 'Partiellement nuageux';
+    if (code <= 48) return 'Brouillard';
+    if (code <= 57) return 'Bruine';
+    if (code <= 67) return 'Pluie';
+    if (code <= 77) return 'Neige';
+    if (code <= 82) return 'Averses';
+    if (code <= 86) return 'Neige';
+    if (code <= 99) return 'Orage';
+    return 'Inconnu';
+  }
+
+  static String _getIconCode(int code) {
+    if (code == 0) return '01d';
+    if (code <= 3) return '02d';
+    if (code <= 48) return '50d';
+    if (code <= 67) return '09d';
+    if (code <= 77) return '13d';
+    if (code <= 82) return '09d';
+    if (code <= 86) return '13d';
+    if (code <= 99) return '11d';
+    return '01d';
   }
 
   IconData get weatherIcon {
