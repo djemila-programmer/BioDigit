@@ -66,14 +66,6 @@ class _MainDashboardState extends State<MainDashboard> {
             const SizedBox(height: 32),
 
             _buildQuickActions(context),
-            const SizedBox(height: 24),
-
-            // ESP8266 Status Card
-            const ESP8266StatusCard(),
-            const SizedBox(height: 12),
-
-            // Supabase Status Card
-            const SupabaseStatusCard(),
             const SizedBox(height: 32),
 
             // Simulation indicator
