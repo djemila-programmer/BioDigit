@@ -158,23 +158,7 @@ class MetricCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (sensorModel != null && sensorModel!.isNotEmpty) ...[                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    sensorModel!,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Theme.of(context).colorScheme.outline,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
+
             ],
           ),
           const SizedBox(height: 4),
@@ -326,8 +310,6 @@ class ESP8266StatusCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _espItem(context, Icons.lan, isFrench ? 'Adresse IP' : 'IP Address', esp?.ipAddress ?? '192.168.1.100'),
-                  const SizedBox(width: 16),
                   _espItem(context, Icons.timer, 'Uptime', esp?.uptime ?? '--'),
                 ],
               ),

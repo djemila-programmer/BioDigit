@@ -433,7 +433,6 @@ class _MainDashboardState extends State<MainDashboard> {
         'color': AppTheme.primary,
         'progress': ((reading.temperature - 25) / 15).clamp(0.0, 1.0),
         'trend': reading.temperatureTrend ?? 'stable',
-        'sensor': 'DHT22',
       },
       {
         'label': 'Pressure',
@@ -443,7 +442,6 @@ class _MainDashboardState extends State<MainDashboard> {
         'color': AppTheme.primary,
         'progress': ((reading.pressure - 0.8) / 0.7).clamp(0.0, 1.0),
         'trend': reading.pressureTrend ?? 'stable',
-        'sensor': 'BMP280',
       },
       {
         'label': 'Methane',
@@ -453,7 +451,6 @@ class _MainDashboardState extends State<MainDashboard> {
         'color': AppTheme.secondary,
         'progress': ((reading.methane - 150) / 350).clamp(0.0, 1.0),
         'trend': reading.methaneTrend ?? 'stable',
-        'sensor': 'MQ-4',
       },
       {
         'label': 'Level',
@@ -463,7 +460,6 @@ class _MainDashboardState extends State<MainDashboard> {
         'color': AppTheme.tertiary,
         'progress': (reading.slurryLevel / 100).clamp(0.0, 1.0),
         'trend': reading.slurryTrend ?? 'stable',
-        'sensor': 'HC-SR04',
       },
     ];
 
@@ -493,7 +489,6 @@ class _MainDashboardState extends State<MainDashboard> {
               progress: m['progress'] as double,
               trend: m['trend'] as String,
               lastUpdate: isFrench ? 'Maintenant' : 'Now',
-              sensorModel: m['sensor'] as String,
             );
           },
         );

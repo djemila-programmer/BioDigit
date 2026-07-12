@@ -18,6 +18,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _progressController;
   late Animation<double> _progressAnimation;
   bool _showButton = false;
+  bool _authResolved = false;
 
   @override
   void initState() {
@@ -41,18 +42,33 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) setState(() => _showButton = true);
     });
 
-    // Check if user is already authenticated and redirect to dashboard
+    // Wait for Supabase to restore session, then redirect
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
       if (auth.isAuthenticated) {
-        final role = auth.user?.role ?? 'user';
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          role == 'admin' ? AppRoutes.adminDashboard : AppRoutes.mainDashboard,
-          (route) => false,
-        );
+        _navigateToDashboard(auth);
+        return;
       }
+      // Listen for auth state change (session restore from Supabase)
+      auth.authStateListener = (authenticated) {
+        if (!_authResolved) {
+          _authResolved = true;
+          if (authenticated) {
+            _navigateToDashboard(context.read<AuthProvider>());
+          }
+        }
+      };
     });
+  }
+
+  void _navigateToDashboard(AuthProvider auth) {
+    if (!mounted) return;
+    final role = auth.user?.role ?? 'user';
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      role == 'admin' ? AppRoutes.adminDashboard : AppRoutes.mainDashboard,
+      (route) => false,
+    );
   }
 
   @override

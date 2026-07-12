@@ -176,16 +176,16 @@ CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = 
 DROP POLICY IF EXISTS "profiles_update" ON profiles;
 CREATE POLICY "profiles_update" ON profiles FOR UPDATE USING (auth.uid() = id);
 
--- sensor_readings: l'utilisateur voit ses lectures, ESP8266 peut insérer
+-- sensor_readings: l'utilisateur voit SES propres lectures uniquement
 DROP POLICY IF EXISTS "sensor_readings_select" ON sensor_readings;
-CREATE POLICY "sensor_readings_select" ON sensor_readings FOR SELECT USING (true);
+CREATE POLICY "sensor_readings_select" ON sensor_readings FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "sensor_readings_insert" ON sensor_readings;
 CREATE POLICY "sensor_readings_insert" ON sensor_readings FOR INSERT WITH CHECK (true);
 
--- esp32_status: tout le monde peut lire et insérer (pour ESP8266)
+-- esp32_status: l'utilisateur voit SES propres statuts uniquement
 DROP POLICY IF EXISTS "esp32_status_select" ON esp32_status;
-CREATE POLICY "esp32_status_select" ON esp32_status FOR SELECT USING (true);
+CREATE POLICY "esp32_status_select" ON esp32_status FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "esp32_status_insert" ON esp32_status;
 CREATE POLICY "esp32_status_insert" ON esp32_status FOR INSERT WITH CHECK (true);

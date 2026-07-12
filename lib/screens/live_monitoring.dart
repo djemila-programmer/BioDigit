@@ -74,6 +74,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PreferredSize(
       preferredSize: const Size.fromHeight(64),
       child: Container(
@@ -97,12 +98,12 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
                   child: Icon(Icons.eco, color: AppTheme.onPrimary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   'BioDigit',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.primary,
+                    color: isDark ? AppTheme.primaryFixed : AppTheme.primary,
                   ),
                 ),
                 const Spacer(),
@@ -296,7 +297,6 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             AppTheme.primary,
             Icons.thermostat,
             reading != null ? ((reading.temperature - 25) / 15).clamp(0.0, 1.0) : 0.0,
-            'DHT22',
             reading?.temperatureTrend ?? 'stable',
             reading != null ? nowText : '--',
           ),
@@ -307,7 +307,6 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             AppTheme.tertiary,
             Icons.speed,
             reading != null ? ((reading.pressure - 0.8) / 0.7).clamp(0.0, 1.0) : 0.0,
-            'BMP280',
             reading?.pressureTrend ?? 'stable',
             reading != null ? nowText : '--',
           ),
@@ -318,7 +317,6 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             AppTheme.primaryContainer,
             Icons.gas_meter,
             reading != null ? ((reading.methane - 150) / 350).clamp(0.0, 1.0) : 0.0,
-            'MQ-4',
             reading?.methaneTrend ?? 'stable',
             reading != null ? nowText : '--',
           ),
@@ -329,7 +327,6 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             AppTheme.secondary,
             Icons.inventory_2,
             reading != null ? (reading.slurryLevel / 100).clamp(0.0, 1.0) : 0.0,
-            'HC-SR04',
             reading?.slurryTrend ?? 'stable',
             reading != null ? nowText : '--',
           ),
@@ -366,18 +363,6 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Sensor model badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              data.sensorModel,
-              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cs.outlineVariant, letterSpacing: 0.5),
-            ),
-          ),
           const SizedBox(height: 8),
           SizedBox(
             width: 90,
@@ -557,7 +542,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
         final attentionText = isFrench ? 'Attention' : 'Warning';
         final sensors = [
           {
-            'name': isFrench ? 'Capteur de température DHT22' : 'DHT22 Temperature Sensor',
+            'name': isFrench ? 'Capteur de température' : 'Temperature Sensor',
             'status': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? normalText : attentionText,
             'detail': reading != null
                 ? '${reading.temperature.toStringAsFixed(1)}\u00b0C - $updatedText'
@@ -566,7 +551,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             'color': reading != null && reading.temperature >= 25 && reading.temperature <= 40 ? AppTheme.primary : AppTheme.error,
           },
           {
-            'name': isFrench ? 'Capteur de méthane MQ-4' : 'MQ-4 Methane Sensor',
+            'name': isFrench ? 'Capteur de méthane' : 'Methane Sensor',
             'status': reading != null && reading.methane >= 150 && reading.methane <= 500 ? normalText : attentionText,
             'detail': reading != null
                 ? '${reading.methane.toStringAsFixed(0)} ppm - $updatedText'
@@ -575,7 +560,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             'color': reading != null && reading.methane >= 150 && reading.methane <= 500 ? AppTheme.primary : AppTheme.error,
           },
           {
-            'name': isFrench ? 'Capteur de pression BMP280' : 'BMP280 Pressure Sensor',
+            'name': isFrench ? 'Capteur de pression' : 'Pressure Sensor',
             'status': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? normalText : attentionText,
             'detail': reading != null
                 ? '${reading.pressure.toStringAsFixed(2)} bar - $updatedText'
@@ -584,7 +569,7 @@ class _LiveMonitoringState extends State<LiveMonitoring> {
             'color': reading != null && reading.pressure >= 0.8 && reading.pressure <= 1.5 ? AppTheme.primary : AppTheme.secondary,
           },
           {
-            'name': isFrench ? 'Capteur ultrason HC-SR04' : 'HC-SR04 Ultrasonic Sensor',
+            'name': isFrench ? 'Capteur ultrason' : 'Ultrasonic Sensor',
             'status': reading != null && reading.slurryLevel >= 20 && reading.slurryLevel <= 90 ? normalText : attentionText,
             'detail': reading != null
                 ? '${reading.slurryLevel.toStringAsFixed(1)}% - $updatedText'
@@ -699,11 +684,10 @@ class _GaugeData {
   final Color color;
   final IconData icon;
   final double progress;
-  final String sensorModel;
   final String trend;
   final String lastUpdate;
 
-  const _GaugeData(this.label, this.value, this.unit, this.color, this.icon, this.progress, this.sensorModel, this.trend, this.lastUpdate);
+  const _GaugeData(this.label, this.value, this.unit, this.color, this.icon, this.progress, this.trend, this.lastUpdate);
 }
 
 class _CircularProgressPainter extends CustomPainter {

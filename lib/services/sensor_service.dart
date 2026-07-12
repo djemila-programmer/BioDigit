@@ -6,11 +6,22 @@ import '../supabase.dart';
 class SensorService {
   // ─── Real-Time Sensor Stream from Supabase Realtime ─────────────────────
 
-  /// Live stream of all sensor readings from ESP8266.
+  /// Live stream of sensor readings for the current user only.
   Stream<SensorReading> sensorDataStream() {
-    return supabase
+    final uid = supabase.auth.currentUser?.id;
+    final query = supabase
         .from('sensor_readings')
-        .stream(primaryKey: ['id'])
+        .stream(primaryKey: ['id']);
+    if (uid != null) {
+      return query
+          .eq('user_id', uid)
+          .map((rows) {
+            if (rows.isEmpty) return SensorReading.empty();
+            final latest = rows.last;
+            return SensorReading.fromSupabase(latest);
+          });
+    }
+    return query
         .map((rows) {
           if (rows.isEmpty) return SensorReading.empty();
           final latest = rows.last;
@@ -18,11 +29,22 @@ class SensorService {
         });
   }
 
-  /// Live stream for a single sensor type.
+  /// Live stream for a single sensor type (current user only).
   Stream<double> singleSensorStream(String sensorKey) {
-    return supabase
+    final uid = supabase.auth.currentUser?.id;
+    final query = supabase
         .from('sensor_readings')
-        .stream(primaryKey: ['id'])
+        .stream(primaryKey: ['id']);
+    if (uid != null) {
+      return query
+          .eq('user_id', uid)
+          .map((rows) {
+            if (rows.isEmpty) return 0.0;
+            final latest = rows.last;
+            return (latest[sensorKey] as num?)?.toDouble() ?? 0.0;
+          });
+    }
+    return query
         .map((rows) {
           if (rows.isEmpty) return 0.0;
           final latest = rows.last;
@@ -30,11 +52,22 @@ class SensorService {
         });
   }
 
-  /// ESP8266 controller status stream from Supabase Realtime.
+  /// ESP8266 controller status stream for current user only.
   Stream<Esp32StatusData> esp32StatusStream() {
-    return supabase
+    final uid = supabase.auth.currentUser?.id;
+    final query = supabase
         .from('esp8266_status')
-        .stream(primaryKey: ['id'])
+        .stream(primaryKey: ['id']);
+    if (uid != null) {
+      return query
+          .eq('user_id', uid)
+          .map((rows) {
+            if (rows.isEmpty) return Esp32StatusData.disconnected();
+            final latest = rows.last;
+            return Esp32StatusData.fromSupabase(latest);
+          });
+    }
+    return query
         .map((rows) {
           if (rows.isEmpty) return Esp32StatusData.disconnected();
           final latest = rows.last;

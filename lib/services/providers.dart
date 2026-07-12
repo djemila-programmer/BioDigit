@@ -29,6 +29,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   StreamSubscription? _authSub;
   bool _isPasswordRecovery = false;
+  void Function(bool authenticated)? authStateListener;
 
   AuthProvider(this._authService) {
     _authSub = _authService.authStateChanges.listen((authState) async {
@@ -39,6 +40,7 @@ class AuthProvider extends ChangeNotifier {
         _user = null;
       }
       notifyListeners();
+      authStateListener?.call(_user != null);
     });
   }
 
@@ -290,12 +292,10 @@ class SensorProvider extends ChangeNotifier {
       notifyListeners();
     });
 
-    // No simulation - just mark as loaded after delay if no data
+    // No auto-simulation: show empty state until real ESP8266 data arrives
     Future.delayed(const Duration(seconds: 3), () {
       if (_latestReading == null || _latestReading!.temperature == 0) {
         _isLoading = false;
-        _isSimulation = true;
-        _simulationService.start(intervalSeconds: 5);
         notifyListeners();
       }
     });
