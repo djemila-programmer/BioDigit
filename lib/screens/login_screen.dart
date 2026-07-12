@@ -64,21 +64,14 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.containerPadding, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
                     border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
                   ),
                   child: Form(
