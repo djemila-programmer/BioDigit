@@ -232,9 +232,9 @@ class SensorProvider extends ChangeNotifier {
   final SimulationService _simulationService;
 
   SensorReading? _latestReading;
-  Esp32StatusData? _esp32Status;
+  Esp8266StatusData? _esp8266Status;
   StreamSubscription? _sensorSub;
-  StreamSubscription? _esp32Sub;
+  StreamSubscription? _esp8266Sub;
   bool _isLoading = true;
   String? _error;
   bool _isOnline = true;
@@ -249,7 +249,7 @@ class SensorProvider extends ChangeNotifier {
   );
 
   SensorReading? get latestReading => _latestReading;
-  Esp32StatusData? get esp32Status => _esp32Status;
+  Esp8266StatusData? get esp8266Status => _esp8266Status;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isOnline => _isOnline;
@@ -287,8 +287,8 @@ class SensorProvider extends ChangeNotifier {
       },
     );
 
-    _esp32Sub = _sensorService.esp32StatusStream().listen((status) {
-      _esp32Status = status;
+    _esp8266Sub = _sensorService.esp8266StatusStream().listen((status) {
+      _esp8266Status = status;
       notifyListeners();
     });
 
@@ -311,7 +311,7 @@ class SensorProvider extends ChangeNotifier {
 
   void stopListening() {
     _sensorSub?.cancel();
-    _esp32Sub?.cancel();
+    _esp8266Sub?.cancel();
     _simulationService.stop();
   }
 

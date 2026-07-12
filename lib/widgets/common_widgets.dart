@@ -242,7 +242,7 @@ class ESP8266StatusCard extends StatelessWidget {
     final isFrench = context.watch<LocaleProvider>().isFrench;
     return Consumer<SensorProvider>(
       builder: (context, sensorProv, _) {
-        final esp = sensorProv.esp32Status;
+        final esp = sensorProv.esp8266Status;
         final isConnected = sensorProv.isOnline;
         final isSimulation = sensorProv.isSimulation;
         return Container(

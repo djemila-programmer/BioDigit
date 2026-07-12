@@ -53,7 +53,7 @@ class SensorService {
   }
 
   /// ESP8266 controller status stream for current user only.
-  Stream<Esp32StatusData> esp32StatusStream() {
+  Stream<Esp8266StatusData> esp8266StatusStream() {
     final uid = supabase.auth.currentUser?.id;
     final query = supabase
         .from('esp8266_status')
@@ -62,16 +62,16 @@ class SensorService {
       return query
           .eq('user_id', uid)
           .map((rows) {
-            if (rows.isEmpty) return Esp32StatusData.disconnected();
+            if (rows.isEmpty) return Esp8266StatusData.disconnected();
             final latest = rows.last;
-            return Esp32StatusData.fromSupabase(latest);
+            return Esp8266StatusData.fromSupabase(latest);
           });
     }
     return query
         .map((rows) {
-          if (rows.isEmpty) return Esp32StatusData.disconnected();
+          if (rows.isEmpty) return Esp8266StatusData.disconnected();
           final latest = rows.last;
-          return Esp32StatusData.fromSupabase(latest);
+          return Esp8266StatusData.fromSupabase(latest);
         });
   }
 
@@ -91,7 +91,7 @@ class SensorService {
   }
 
   /// One-shot read of ESP8266 status.
-  Future<Esp32StatusData> getEsp32Status() async {
+  Future<Esp8266StatusData> getEsp8266Status() async {
     try {
       final response = await supabase
           .from('esp8266_status')
@@ -99,10 +99,10 @@ class SensorService {
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
-      if (response == null) return Esp32StatusData.disconnected();
-      return Esp32StatusData.fromSupabase(response);
+      if (response == null) return Esp8266StatusData.disconnected();
+      return Esp8266StatusData.fromSupabase(response);
     } catch (e) {
-      return Esp32StatusData.disconnected();
+      return Esp8266StatusData.disconnected();
     }
   }
 
@@ -217,7 +217,7 @@ class SensorReading {
 }
 
 /// ESP8266 controller status data.
-class Esp32StatusData {
+class Esp8266StatusData {
   final bool connected;
   final int wifiSignal;
   final String firmwareVersion;
@@ -227,7 +227,7 @@ class Esp32StatusData {
   final double cpuTemp;
   final String uptime;
 
-  const Esp32StatusData({
+  const Esp8266StatusData({
     required this.connected,
     required this.wifiSignal,
     required this.firmwareVersion,
@@ -238,7 +238,7 @@ class Esp32StatusData {
     required this.uptime,
   });
 
-  factory Esp32StatusData.disconnected() => Esp32StatusData(
+  factory Esp8266StatusData.disconnected() => Esp8266StatusData(
         connected: false,
         wifiSignal: 0,
         firmwareVersion: 'N/A',
@@ -248,8 +248,8 @@ class Esp32StatusData {
         uptime: '0',
       );
 
-  factory Esp32StatusData.fromSupabase(Map<String, dynamic> data) {
-    return Esp32StatusData(
+  factory Esp8266StatusData.fromSupabase(Map<String, dynamic> data) {
+    return Esp8266StatusData(
       connected: data['connected'] == true,
       wifiSignal: (data['wifi_signal'] as num?)?.toInt() ?? 0,
       firmwareVersion: data['firmware_version']?.toString() ?? 'N/A',
