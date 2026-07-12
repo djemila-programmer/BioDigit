@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
 );
 
 -- 3. STATUT ESP8266
-CREATE TABLE IF NOT EXISTS esp32_status (
+CREATE TABLE IF NOT EXISTS esp8266_status (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   connected BOOLEAN DEFAULT false,
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS feedings (
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sensor_readings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE esp32_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE esp8266_status ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sensor_health ENABLE ROW LEVEL SECURITY;
@@ -183,15 +183,15 @@ CREATE POLICY "sensor_readings_select" ON sensor_readings FOR SELECT USING (auth
 DROP POLICY IF EXISTS "sensor_readings_insert" ON sensor_readings;
 CREATE POLICY "sensor_readings_insert" ON sensor_readings FOR INSERT WITH CHECK (true);
 
--- esp32_status: l'utilisateur voit SES propres statuts uniquement
-DROP POLICY IF EXISTS "esp32_status_select" ON esp32_status;
-CREATE POLICY "esp32_status_select" ON esp32_status FOR SELECT USING (auth.uid() = user_id);
+-- esp8266_status: l'utilisateur voit SES propres statuts uniquement
+DROP POLICY IF EXISTS "esp8266_status_select" ON esp8266_status;
+CREATE POLICY "esp8266_status_select" ON esp8266_status FOR SELECT USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "esp32_status_insert" ON esp32_status;
-CREATE POLICY "esp32_status_insert" ON esp32_status FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "esp8266_status_insert" ON esp8266_status;
+CREATE POLICY "esp8266_status_insert" ON esp8266_status FOR INSERT WITH CHECK (true);
 
-DROP POLICY IF EXISTS "esp32_status_update" ON esp32_status;
-CREATE POLICY "esp32_status_update" ON esp32_status FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "esp8266_status_update" ON esp8266_status;
+CREATE POLICY "esp8266_status_update" ON esp8266_status FOR UPDATE USING (true);
 
 -- alerts: utilisateur voit ses alertes
 DROP POLICY IF EXISTS "alerts_select" ON alerts;
@@ -282,8 +282,8 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE sensor_readings;
   END IF;
   
-  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'esp32_status') THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE esp32_status;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'esp8266_status') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE esp8266_status;
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'alerts') THEN
@@ -359,7 +359,7 @@ $$;
 
 CREATE INDEX IF NOT EXISTS idx_sensor_readings_user ON sensor_readings(user_id);
 CREATE INDEX IF NOT EXISTS idx_sensor_readings_created ON sensor_readings(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_esp32_status_user ON esp32_status(user_id);
+CREATE INDEX IF NOT EXISTS idx_esp8266_status_user ON esp8266_status(user_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
