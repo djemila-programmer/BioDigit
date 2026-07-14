@@ -25,40 +25,134 @@ class LandingScreen extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(Icons.eco, color: AppTheme.onPrimary, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'BioDigit',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-                        child: const Text('Connexion'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                        child: const Text('Créer un compte'),
-                      ),
-                    ],
+              Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  child: LayoutBuilder(
+    builder: (context, constraints) {
+      final mobile = constraints.maxWidth < 650;
+
+      if (mobile) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.eco,
+                    color: AppTheme.onPrimary,
+                    size: 24,
                   ),
                 ),
+                const SizedBox(width: 12),
+                const Text(
+                  "BioDigit",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 15),
+
+            Row(
+  children: [
+
+    Expanded(
+      child: TextButton(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+        ),
+
+        onPressed: () =>
+            Navigator.pushNamed(context, AppRoutes.login),
+
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Connexion",
+          ),
+        ),
+      ),
+    ),
+
+
+    const SizedBox(width: 8),
+
+
+    Expanded(
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 7,
+            vertical: 12,
+          ),
+          minimumSize: Size.zero,
+        ),
+
+        onPressed: () =>
+            Navigator.pushNamed(context, AppRoutes.register),
+
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Créer un compte",
+          ),
+        ),
+      ),
+    ),
+
+  ],
+),
+          ],
+        );
+      }
+
+      return Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.eco,
+                color: AppTheme.onPrimary, size: 20),
+          ),
+          const SizedBox(width: 9),
+          const Text(
+            "BioDigit",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primary,
+            ),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.login),
+            child: const Text("Connexion"),
+          ),
+          const SizedBox(width: 6),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.register),
+            child: const Text("s'inscrire"),
+          ),
+        ],
+      );
+    },
+  ),
+),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: LayoutBuilder(
