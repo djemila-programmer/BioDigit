@@ -29,7 +29,7 @@ class LandingScreen extends StatelessWidget {
   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
   child: LayoutBuilder(
     builder: (context, constraints) {
-      final mobile = constraints.maxWidth < 650;
+      final mobile = constraints.maxWidth < 600;
 
       if (mobile) {
         return Column(
