@@ -477,21 +477,26 @@ class BiodigesterVisual extends StatelessWidget {
           Positioned(
             top: 16,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(9999),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF4CAF50), shape: BoxShape.circle)),
-                  const SizedBox(width: 6),
-                  const Text('SYSTEM ONLINE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
-                ],
-              ),
+            child: Consumer<SensorProvider>(
+              builder: (context, sensorProv, _) {
+                final isOnline = sensorProv.isOnline;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(9999),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 6, height: 6, decoration: BoxDecoration(color: isOnline ? const Color(0xFF4CAF50) : const Color(0xFFEF9A9A), shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Text(isOnline ? 'SYSTEM ONLINE' : 'OFFLINE', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
           // Bottom info
@@ -532,28 +537,34 @@ class BiodigesterVisual extends StatelessWidget {
           Positioned(
             bottom: 16,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('BIOGAS', style: TextStyle(fontSize: 10, color: AppTheme.onSurfaceVariant, letterSpacing: 1, fontWeight: FontWeight.w500)),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
+            child: Consumer<HistoryProvider>(
+              builder: (context, historyProv, _) {
+                final prod = historyProv.production;
+                final volume = prod?.volume ?? 0;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('12.5', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppTheme.primary)),
-                      const SizedBox(width: 2),
-                      Text('m³/day', style: TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant)),
+                      const Text('BIOGAS', style: TextStyle(fontSize: 10, color: AppTheme.onSurfaceVariant, letterSpacing: 1, fontWeight: FontWeight.w500)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(volume > 0 ? volume.toStringAsFixed(1) : '--', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                          const SizedBox(width: 2),
+                          const Text('m³/day', style: TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant)),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -689,10 +700,27 @@ class BiogasProductionCard extends StatelessWidget {
     return Consumer<HistoryProvider>(
       builder: (context, historyProv, _) {
         final prod = historyProv.production;
-        final volume = prod?.volume ?? 0;
-        final efficiency = prod?.efficiency ?? 0;
-        final energy = prod?.energyGenerated ?? 0;
-        final co2 = prod?.co2Reduction ?? 0;
+        if (prod == null || prod.volume == 0) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryContainer.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppTheme.primaryContainer.withValues(alpha: 0.3)),
+            ),
+            child: Center(
+              child: Text(
+                isFrench ? 'Aucune donnée de production disponible' : 'No production data available',
+                style: TextStyle(fontSize: 14, color: AppTheme.onSurfaceVariant),
+              ),
+            ),
+          );
+        }
+        final volume = prod.volume;
+        final efficiency = prod.efficiency;
+        final energy = prod.energyGenerated;
+        final co2 = prod.co2Reduction;
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
@@ -753,8 +781,8 @@ class BiogasProductionCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     isFrench
-                        ? '${prod?.readingCount ?? 0} mesures - Période: ${prod?.period ?? '--'}'
-                        : '${prod?.readingCount ?? 0} readings - Period: ${prod?.period ?? '--'}',
+                        ? '${prod.readingCount} mesures - Période: ${prod.period}'
+                        : '${prod.readingCount} readings - Period: ${prod.period}',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.onPrimaryContainer.withValues(alpha: 0.9),
@@ -790,10 +818,13 @@ class EnergyImpactCard extends StatelessWidget {
     return Consumer<HistoryProvider>(
       builder: (context, historyProv, _) {
         final prod = historyProv.production;
-        final energy = prod?.energyGenerated ?? 0;
-        final co2 = prod?.co2Reduction ?? 0;
-        final efficiency = prod?.efficiency ?? 0;
-        final readingCount = prod?.readingCount ?? 0;
+        if (prod == null || prod.volume == 0) {
+          return const SizedBox.shrink();
+        }
+        final energy = prod.energyGenerated;
+        final co2 = prod.co2Reduction;
+        final efficiency = prod.efficiency;
+        final readingCount = prod.readingCount;
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),

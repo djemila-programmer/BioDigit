@@ -176,7 +176,7 @@ class _AppSessionListenerState extends State<AppSessionListener> {
 
     final auth = context.watch<AuthProvider>();
 
-    // ── Start data listeners once after successful authentication ──
+    // ── Start data listeners once after successful authentication ─
     if (auth.isAuthenticated && !_dataListenersStarted) {
       _dataListenersStarted = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -184,6 +184,7 @@ class _AppSessionListenerState extends State<AppSessionListener> {
         context.read<SensorProvider>().startListening();
         context.read<AlertProvider>().startListening();
         context.read<NotificationProvider>().startListening();
+        context.read<NotificationService>().startListening();
       });
     }
 

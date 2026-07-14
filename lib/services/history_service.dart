@@ -21,22 +21,22 @@ class HistoryService {
   // ─── Chart Data Retrieval ───────────────────────────────────────────────
 
   Future<List<HistoryPoint>> getLast24Hours() async {
-    if (_uid == null) return _demoData(24, const Duration(hours: 1));
+    if (_uid == null) return [];
     return _getReadingsSince(DateTime.now().subtract(const Duration(hours: 24)));
   }
 
   Future<List<HistoryPoint>> getLast7Days() async {
-    if (_uid == null) return _demoData(7, const Duration(days: 1));
+    if (_uid == null) return [];
     return _getReadingsSince(DateTime.now().subtract(const Duration(days: 7)));
   }
 
   Future<List<HistoryPoint>> getLast30Days() async {
-    if (_uid == null) return _demoData(30, const Duration(days: 1));
+    if (_uid == null) return [];
     return _getReadingsSince(DateTime.now().subtract(const Duration(days: 30)));
   }
 
   Future<List<HistoryPoint>> getLast12Months() async {
-    if (_uid == null) return _demoData(12, const Duration(days: 30));
+    if (_uid == null) return [];
     return _getReadingsSince(DateTime.now().subtract(const Duration(days: 365)));
   }
 
@@ -62,12 +62,7 @@ class HistoryService {
   // ─── Production Aggregation ─────────────────────────────────────────────
 
   Future<ProductionSummary> getProductionSummary(String period) async {
-    if (_uid == null) {
-      return ProductionSummary(
-        volume: 87.5, efficiency: 78.2, energyGenerated: 525.0,
-        co2Reduction: 2.19, readingCount: 168, period: period,
-      );
-    }
+    if (_uid == null) return ProductionSummary.empty();
     DateTime since;
     switch (period) {
       case 'daily': since = DateTime.now().subtract(const Duration(days: 1)); break;
@@ -102,20 +97,6 @@ class HistoryService {
       co2Reduction: double.parse(co2.toStringAsFixed(2)),
       readingCount: count, period: period,
     );
-  }
-
-  List<HistoryPoint> _demoData(int count, Duration interval) {
-    final now = DateTime.now();
-    return List.generate(count, (i) {
-      final t = now.subtract(interval * (count - i));
-      return HistoryPoint(
-        timestamp: t,
-        temperature: 35.0 + (i % 7) * 0.8,
-        pressure: 1.02 + (i % 5) * 0.015,
-        methane: 290 + (i % 9) * 15.0,
-        slurryLevel: 68 + (i % 6) * 3.0,
-      );
-    });
   }
 }
 

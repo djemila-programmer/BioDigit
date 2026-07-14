@@ -7,6 +7,7 @@ class NotificationService {
   FlutterLocalNotificationsPlugin? _localNotifications;
   bool _initialized = false;
   int _nextNotificationId = 100;
+  final Set<int> _shownNotificationIds = {};
 
   FlutterLocalNotificationsPlugin? get _localNotif {
     _localNotifications ??= FlutterLocalNotificationsPlugin();
@@ -35,14 +36,11 @@ class NotificationService {
     );
     await _localNotif!.initialize(initSettings);
 
-    // Listen to real-time notifications from Supabase
-    _listenToNotifications();
-
     _initialized = true;
   }
 
-  /// Listen to notifications from Supabase Realtime.
-  void _listenToNotifications() {
+  /// Start listening to notifications (call after authentication).
+  void startListening() {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) return;
 
@@ -53,10 +51,13 @@ class NotificationService {
         .listen((rows) {
       final unread = rows.where((row) => row['read'] != true).toList();
       for (final row in unread) {
+        final notifId = row['id']?.hashCode ?? 0;
+        if (_shownNotificationIds.contains(notifId)) continue;
+        _shownNotificationIds.add(notifId);
         _showLocalNotification(
           title: row['title']?.toString() ?? 'BioSmart',
           body: row['body']?.toString() ?? '',
-          id: row['id']?.hashCode ?? 0,
+          id: notifId,
         );
       }
     });

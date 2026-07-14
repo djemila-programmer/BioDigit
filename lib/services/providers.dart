@@ -258,6 +258,7 @@ class SensorProvider extends ChangeNotifier {
   /// Start listening to real-time sensor data.
   /// Shows empty state until a real ESP8266 connects and pushes data.
   void startListening() {
+    stopListening();
     _isLoading = true;
     notifyListeners();
 
@@ -342,6 +343,7 @@ class AlertProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   void startListening() {
+    stopListening();
     _alertSub = _alertService.alertsStream().listen((alerts) {
       _alerts = alerts;
       _isLoading = false;
@@ -506,9 +508,8 @@ class FarmProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // Check if user is admin - if so, load all farms
       final userRole = supabase.auth.currentUser != null 
-          ? await _getUserRole() 
+          ? (await _getUserProfile())?.role ?? 'user'
           : 'user';
 
       if (userRole == 'admin') {
@@ -524,16 +525,17 @@ class FarmProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> _getUserRole() async {
+  Future<UserModel?> _getUserProfile() async {
     try {
       final response = await supabase
           .from('profiles')
-          .select('role')
+          .select()
           .eq('id', supabase.auth.currentUser!.id)
           .maybeSingle();
-      return response?['role'] as String? ?? 'user';
+      if (response == null) return null;
+      return UserModel.fromJson(response);
     } catch (_) {
-      return 'user';
+      return null;
     }
   }
 
